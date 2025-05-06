@@ -3,10 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "description": "Classroom mode for freeCodeCamp",
-  "engines": {
-    "node": "^16",
-    "npm": "^8"
-  },
   "main": "index.js",
   "repository": {
     "type": "git",
