@@ -15,33 +15,45 @@ export default async function handler(req, res) {
       });
     }
 
-    // Get token from cookie if it exists, otherwise from body
+    // Get token from cookie if it exists
     const cookieToken = cookies.jwt_access_token;
-    const { options } = req.body;
+    const { emails } = req.body;
+
+    console.log('emails:', emails);
 
     if (!cookieToken) {
       console.log('Unauthorized!');
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // The actual URL to FCC's API
-    const fccUrl = 'http://localhost:3000/api/hello';
+    if (!emails || !Array.isArray(emails)) {
+      console.log('Missing or invalid emails array');
+      return res.status(400).json({ error: 'Missing emails array' });
+    }
+
+    // Convert email array to comma-separated string
+    const emailsString = emails.join(',');
+    
+    // Build the URL with query parameters
+    const fccUrl = `http://localhost:3000/api/protected/classroom/get-user-data?emails=${encodeURIComponent(emailsString)}`;
+    
+    console.log('Requesting URL:', fccUrl);
 
     const headers = {
-      ...options?.headers,
       'Content-Type': 'application/json',
-      Cookie: `jwt_access_token=${cookieToken}`
+      'Cookie': `jwt_access_token=${cookieToken}`
     };
-
-    // Make the request from the server
+    
+    // Make the request - change to GET method and remove body
     const fccResponse = await fetch(fccUrl, {
-      ...options,
+      method: 'GET',
       headers,
       credentials: 'include'
     });
 
     // Get the response data
     const data = await fccResponse.json();
+    console.log('Response from FCC:', data);
 
     // Return the data to the client
     return res.status(fccResponse.status).json(data);

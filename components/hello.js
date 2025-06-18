@@ -11,7 +11,9 @@ export default function HelloComponent() {
  useEffect(() => {
    async function fetchData() {
      try {
-       const result = await fetchFromFCC();
+       const result = await fetchFromFCC({
+          emails: ['foo@bar.com'],
+       });
        setData(result);
      } catch (err) {
        setError(err.message);

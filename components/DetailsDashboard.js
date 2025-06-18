@@ -31,6 +31,7 @@ export default function DetailsDashboard(props) {
           props.superblocksDetailsJSONArray[index][0].superblock;
         let progressInBlocks = superblockProgress(superblockDashedName);
         let superblockTitle = printSuperblockTitle(arrayOfBlockObjs);
+        console.log("superblockTitle", superblockTitle);
         return (
           <div key={idx} className={styles.board_container}>
             <DetailsDashboardList

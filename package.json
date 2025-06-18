@@ -24,7 +24,8 @@
     "lint:pretty": "prettier --ignore-path .gitignore --check  .",
     "format": "prettier --ignore-path .gitignore --write .",
     "prepare": "husky install",
-    "mock-fcc-data": "npx json-server --watch mock-json-server/fccdata.json --port 3002"
+    "mock-fcc-data": "npx json-server --watch mock-json-server/fccdata.json --port 3002",
+    "seed-classroom": "node scripts/seed-classroom.js"
   },
   "dependencies": {
     "@headlessui/react": "1.7.17",

@@ -75,6 +75,7 @@ export async function getServerSideProps(context) {
   );
 
   let superBlockJsons = await getSuperBlockJsons(superblockURLS); // this is an array of urls
+  console.log('superBlockJsons', superBlockJsons);
   let superblocksDetailsJSONArray = await createSuperblockDashboardObject(
     superBlockJsons
   );

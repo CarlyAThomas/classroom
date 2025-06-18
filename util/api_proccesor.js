@@ -5,10 +5,15 @@ export const AVAILABLE_SUPER_BLOCKS =
 /** ============ getAllTitlesAndDashedNamesSuperblockJSONArray() ============ */
 export async function getAllTitlesAndDashedNamesSuperblockJSONArray() {
   // calls this API https://www.freecodecamp.org/curriculum-data/v1/available-superblocks.json
+  console.log("Fetching superblocks data...");
   const superblocksres = await fetch(AVAILABLE_SUPER_BLOCKS);
 
   // the response of this structure is [ superblocks: [ {}, {}, ...etc] ]
   const curriculumData = await superblocksres.json();
+  console.log(
+    'curriculumData.superblocks',
+    curriculumData.superblocks
+  );
 
   // which is why we return curriculumData.superblocks
   return curriculumData.superblocks;
@@ -36,6 +41,10 @@ export async function getAllSuperblockTitlesAndDashedNames() {
         superblockDashedNameToTitleArray
       );
     }
+  );
+  console.log(
+    'superblockDashedNameToTitleArrayMapping',
+    superblockDashedNameToTitleArrayMapping
   );
   return superblockDashedNameToTitleArrayMapping;
 }
@@ -283,7 +292,7 @@ If you are having issues with the selector, you should probably check there.
           order:
             currBlock[certificationName]['blocks'][course]['challenges'][
               'order'
-            ]
+            ] ?? null
         };
         return currCourseBlock;
       });
@@ -296,10 +305,69 @@ If you are having issues with the selector, you should probably check there.
   return sortedBlocks.flat(1);
 }
 
+// Add import at the top of the file
+import { fetchFromFCC } from './fcc_proper';
+
 /** ============ fetchStudentData() ============ */
-export async function fetchStudentData() {
-  let data = await fetch(process.env.MOCK_USER_DATA_URL);
-  return data.json();
+export async function fetchStudentData(classroomId, context) {
+  try {
+    // First, get the classroom data including the fccUserIds
+    const classroomData = await prisma.classroom.findUnique({
+      where: {
+        classroomId: classroomId
+      },
+      select: {
+        fccUserIds: true,
+        fccCertifications: true,
+        classroomName: true
+      }
+    });
+    
+    if (!classroomData) {
+      console.error('No classroom found with ID:', classroomId);
+      return [];
+    }
+
+    console.log('Classroom Data:', classroomData);
+    
+    // Now get the users with those IDs
+    const students = await prisma.user.findMany({
+      where: {
+        id: {
+          in: classroomData.fccUserIds
+        }
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true
+      }
+    });
+
+    console.log('Students:', students);
+    
+    // If no students, return empty array
+    if (students.length === 0) {
+      return [];
+    }
+    
+    // Extract just the email addresses for the FCC API call
+    const studentEmails = students.map(student => student.email);
+    
+    console.log('Student Emails:', studentEmails);
+
+    // Use fetchFromFCC instead of direct fetch
+    const data = await fetchFromFCC({
+      emails: studentEmails,
+    }, context);
+    
+    console.log('Response Data:', data);
+    
+    return data.data || [];
+  } catch (error) {
+    console.error('Error in fetchStudentData:', error);
+    return [];
+  }
 }
 
 /** ============ getIndividualStudentData(studentEmail) ============ */
@@ -376,6 +444,7 @@ export function getStudentTotalChallengesCompletedInBlock(
   let totalChallengesCompletedInBlock = 0;
   studentProgressInBlock.forEach(blockProgressObj => {
     let blockTitle = Object.keys(blockProgressObj)[0];
+    console.log("blockprogressObj", blockProgressObj);
 
     if (blockTitle === blockName) {
       totalChallengesCompletedInBlock =

@@ -32,6 +32,8 @@ export default function DetailsDashboardList(props) {
     );
   };
 
+  console.log("props.blockData", props.blockData);
+
   return (
     <>
       <div className={styles.list_container}>
@@ -47,6 +49,7 @@ export default function DetailsDashboardList(props) {
             <ul>
               <li>
                 {props.blockData.map((blockDetails, idx) => {
+                  console.log("blockDetails", blockDetails);
                   return (
                     <div className={styles.details_progress_stats} key={idx}>
                       <h1 className={styles.detailsBlockTitle}>

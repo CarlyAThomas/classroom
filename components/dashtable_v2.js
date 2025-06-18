@@ -6,6 +6,8 @@ import { extractStudentCompletionTimestamps } from '../util/api_proccesor';
 export default function GlobalDashboardTable(props) {
   let grandTotalChallenges = props.totalChallenges;
 
+  console.log("props.studentData", props.studentData);
+
   let rawStudentSummary = props.studentData.map(studentJSON => {
     let email = studentJSON.email;
     let completionTimestamps = [];
