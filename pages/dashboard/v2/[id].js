@@ -69,8 +69,8 @@ export async function getServerSideProps(context) {
   let studentData = await fetchStudentData(context.params.id, context);
 
   console.log('studentData', studentData);
-  console.log('studentdata[0].certifications', studentData[0].certifications);
-  console.log('studentdata[0].certifications[0]', studentData[0].certifications[0]);
+  // console.log('studentdata[0].certifications', studentData[0].certifications);
+  // console.log('studentdata[0].certifications[0]', studentData[0].certifications[0]);
 
   // Temporary check to map/accomodate hard-coded mock student data progress in unselected superblocks by teacher
   let studentsAreEnrolledInSuperblocks =

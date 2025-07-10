@@ -15,7 +15,10 @@ export default function DetailsDashboard(props) {
   };
 
   const superblockProgress = superblockDashedName => {
+    console.log('props', props);
     let studentProgress = props.studentData;
+
+    console.log('studentProgress', studentProgress);
 
     return getStudentProgressInSuperblock(
       studentProgress,

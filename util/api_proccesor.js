@@ -10,10 +10,10 @@ export async function getAllTitlesAndDashedNamesSuperblockJSONArray() {
 
   // the response of this structure is [ superblocks: [ {}, {}, ...etc] ]
   const curriculumData = await superblocksres.json();
-  console.log(
-    'curriculumData.superblocks',
-    curriculumData.superblocks
-  );
+  // console.log(
+  //   'curriculumData.superblocks',
+  //   curriculumData.superblocks
+  // );
 
   // which is why we return curriculumData.superblocks
   return curriculumData.superblocks;
@@ -42,10 +42,10 @@ export async function getAllSuperblockTitlesAndDashedNames() {
       );
     }
   );
-  console.log(
-    'superblockDashedNameToTitleArrayMapping',
-    superblockDashedNameToTitleArrayMapping
-  );
+  // console.log(
+  //   'superblockDashedNameToTitleArrayMapping',
+  //   superblockDashedNameToTitleArrayMapping
+  // );
   return superblockDashedNameToTitleArrayMapping;
 }
 
@@ -356,6 +356,8 @@ export async function fetchStudentData(classroomId, context) {
     
     console.log('Student Emails:', studentEmails);
 
+    console.log("context", context);
+
     // Use fetchFromFCC instead of direct fetch
     const data = await fetchFromFCC({
       emails: studentEmails,
@@ -372,8 +374,9 @@ export async function fetchStudentData(classroomId, context) {
 
 /** ============ getIndividualStudentData(studentEmail) ============ */
 // Uses for the details page
-export async function getIndividualStudentData(studentEmail) {
-  let studentData = await fetchStudentData();
+export async function getIndividualStudentData(studentEmail, classroomId, context) {
+  let studentData = await fetchStudentData(classroomId, context);
+  console.log("studentData in getIndividualStudentData", studentData);
   let individualStudentObj = {};
   studentData.forEach(individualStudentDetailsObj => {
     if (individualStudentDetailsObj.email === studentEmail) {
@@ -424,6 +427,8 @@ export function getStudentProgressInSuperblock(
   specificSuperblockDashedName
 ) {
   let blockProgressDetails = [];
+
+  console.log("studentSuperblocksJSON", studentSuperblocksJSON);
 
   studentSuperblocksJSON.certifications.forEach(superblockProgressJSON => {
     // the keys are dynamic which is why we have to use Object.keys(obj)

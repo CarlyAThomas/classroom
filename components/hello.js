@@ -13,7 +13,7 @@ export default function HelloComponent() {
      try {
        const result = await fetchFromFCC({
           emails: ['foo@bar.com'],
-       });
+       }, null);
        setData(result);
      } catch (err) {
        setError(err.message);

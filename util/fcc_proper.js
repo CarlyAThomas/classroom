@@ -3,6 +3,8 @@ import { getSession } from 'next-auth/react';
 export async function fetchFromFCC(options = {}, context = null) {
   // Get session, with context if provided (for server-side calls)
   const session = context ? await getSession(context) : await getSession();
+
+  console.log('Session:', session);
   
   if (!session) {
     throw new Error('User not authenticated');
