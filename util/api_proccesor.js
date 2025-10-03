@@ -305,8 +305,9 @@ If you are having issues with the selector, you should probably check there.
   return sortedBlocks.flat(1);
 }
 
-// Add import at the top of the file
 import { fetchFromFCC } from './fcc_proper';
+import { resolveAllStudentsToDashboardFormat } from './challengeMapUtils';
+//import prisma from '../prisma/prisma';
 
 /** ============ fetchStudentData() ============ */
 export async function fetchStudentData(classroomId, context) {
@@ -322,14 +323,11 @@ export async function fetchStudentData(classroomId, context) {
         classroomName: true
       }
     });
-    
     if (!classroomData) {
       console.error('No classroom found with ID:', classroomId);
       return [];
     }
 
-    console.log('Classroom Data:', classroomData);
-    
     // Now get the users with those IDs
     const students = await prisma.user.findMany({
       where: {
@@ -344,27 +342,33 @@ export async function fetchStudentData(classroomId, context) {
       }
     });
 
-    console.log('Students:', students);
-    
     // If no students, return empty array
     if (students.length === 0) {
       return [];
     }
-    
+
     // Extract just the email addresses for the FCC API call
     const studentEmails = students.map(student => student.email);
-    
-    console.log('Student Emails:', studentEmails);
-
-    console.log("context", context);
 
     // Use fetchFromFCC instead of direct fetch
-    const data = await fetchFromFCC({
-      emails: studentEmails,
-    }, context);
-    
-    console.log('Response Data:', data);
-    
+    const data = await fetchFromFCC(
+      {
+        emails: studentEmails
+      },
+      context
+    );
+
+    // If FCC Proper returns { data: { email: [completedChallenges] } }, resolve to dashboard format
+    if (
+      data &&
+      data.data &&
+      typeof data.data === 'object' &&
+      !Array.isArray(data.data)
+    ) {
+      return resolveAllStudentsToDashboardFormat(data.data);
+    }
+
+    // Otherwise, return as-is (for legacy/mock data)
     return data.data || [];
   } catch (error) {
     console.error('Error in fetchStudentData:', error);
@@ -374,9 +378,12 @@ export async function fetchStudentData(classroomId, context) {
 
 /** ============ getIndividualStudentData(studentEmail) ============ */
 // Uses for the details page
-export async function getIndividualStudentData(studentEmail, classroomId, context) {
+export async function getIndividualStudentData(
+  studentEmail,
+  classroomId,
+  context
+) {
   let studentData = await fetchStudentData(classroomId, context);
-  console.log("studentData in getIndividualStudentData", studentData);
   let individualStudentObj = {};
   studentData.forEach(individualStudentDetailsObj => {
     if (individualStudentDetailsObj.email === studentEmail) {

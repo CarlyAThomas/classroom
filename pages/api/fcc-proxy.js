@@ -4,8 +4,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('In fcc-proxy ******************************');
-
     // Parse cookies from request header
     const cookies = {};
     if (req.headers.cookie) {
@@ -19,8 +17,6 @@ export default async function handler(req, res) {
     const cookieToken = cookies.jwt_access_token;
     const { emails } = req.body;
 
-    console.log('emails:', emails);
-
     if (!cookieToken) {
       console.log('Unauthorized!');
       return res.status(401).json({ error: 'Unauthorized' });
@@ -33,17 +29,17 @@ export default async function handler(req, res) {
 
     // Convert email array to comma-separated string
     const emailsString = emails.join(',');
-    
+
     // Build the URL with query parameters
-    const fccUrl = `http://localhost:3000/api/protected/classroom/get-user-data?emails=${encodeURIComponent(emailsString)}`;
-    
-    console.log('Requesting URL:', fccUrl);
+    const fccUrl = `http://localhost:3000/api/protected/classroom/get-user-data?emails=${encodeURIComponent(
+      emailsString
+    )}`;
 
     const headers = {
       'Content-Type': 'application/json',
-      'Cookie': `jwt_access_token=${cookieToken}`
+      Cookie: `jwt_access_token=${cookieToken}`
     };
-    
+
     // Make the request - change to GET method and remove body
     const fccResponse = await fetch(fccUrl, {
       method: 'GET',
@@ -53,7 +49,6 @@ export default async function handler(req, res) {
 
     // Get the response data
     const data = await fccResponse.json();
-    console.log('Response from FCC:', data);
 
     // Return the data to the client
     return res.status(fccResponse.status).json(data);

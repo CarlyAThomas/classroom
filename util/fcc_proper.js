@@ -1,27 +1,27 @@
-import { getSession } from 'next-auth/react';
+const { getSession } = require('next-auth/react');
 
-export async function fetchFromFCC(options = {}, context = null) {
+async function fetchFromFCC(options = {}, context = null) {
   // Get session, with context if provided (for server-side calls)
   const session = context ? await getSession(context) : await getSession();
 
-  console.log('Session:', session);
-  
   if (!session) {
     throw new Error('User not authenticated');
   }
-  
+
   // Determine if we're running on the server
   const isServer = typeof window === 'undefined';
-  
+
   // Use absolute URL when on server, relative URL when on client
-  const baseUrl = isServer ? process.env.NEXTAUTH_URL || 'http://localhost:3001' : '';
+  const baseUrl = isServer
+    ? process.env.NEXTAUTH_URL || 'http://localhost:3001'
+    : '';
   const url = `${baseUrl}/api/fcc-proxy`;
-  
+
   // Get the auth cookie if we're server-side and have context
   let headers = {
     'Content-Type': 'application/json'
   };
-  
+
   // If we're in a server context, forward the cookie header
   if (isServer && context && context.req && context.req.headers.cookie) {
     headers['Cookie'] = context.req.headers.cookie;
@@ -32,14 +32,20 @@ export async function fetchFromFCC(options = {}, context = null) {
     method: 'POST',
     headers,
     body: JSON.stringify({
-      emails: options.emails || []
+      emails: options.emails || [],
+      options: options,
+      targetUrl: options.targetUrl
     }),
     credentials: 'include' // Important for cookies
   });
-  
+
   if (!response.ok) {
     throw new Error(`API request failed with status ${response.status}`);
   }
-  
+
   return response.json();
 }
+
+module.exports = {
+  fetchFromFCC
+};

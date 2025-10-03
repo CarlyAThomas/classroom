@@ -25,7 +25,7 @@
     "format": "prettier --ignore-path .gitignore --write .",
     "prepare": "husky install",
     "mock-fcc-data": "npx json-server --watch mock-json-server/fccdata.json --port 3002",
-    "seed-classroom": "node scripts/seed-classroom.js"
+    "update-challenge-map": "node scripts/update-challenge-map.mjs"
   },
   "dependencies": {
     "@headlessui/react": "1.7.17",
