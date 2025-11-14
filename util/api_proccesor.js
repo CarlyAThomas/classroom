@@ -301,7 +301,11 @@ import { resolveAllStudentsToDashboardFormat } from './challengeMapUtils';
 import prisma from '../prisma/prisma';
 
 /** ============ fetchStudentData() ============ */
-export async function fetchStudentData(classroomId, context) {
+export async function fetchStudentData(
+  classroomId,
+  context,
+  curriculumMap = null
+) {
   try {
     // First, get the classroom data including the fccUserIds
     const classroomData = await prisma.classroom.findUnique({
@@ -357,7 +361,7 @@ export async function fetchStudentData(classroomId, context) {
       typeof data.data === 'object' &&
       !Array.isArray(data.data)
     ) {
-      return resolveAllStudentsToDashboardFormat(data.data);
+      return resolveAllStudentsToDashboardFormat(data.data, curriculumMap);
     }
 
     // Otherwise, return as-is (for legacy/mock data)
@@ -373,9 +377,10 @@ export async function fetchStudentData(classroomId, context) {
 export async function getIndividualStudentData(
   studentEmail,
   classroomId,
-  context
+  context,
+  curriculumMap = null
 ) {
-  let studentData = await fetchStudentData(classroomId, context);
+  let studentData = await fetchStudentData(classroomId, context, curriculumMap);
   let individualStudentObj = {};
   studentData.forEach(individualStudentDetailsObj => {
     if (individualStudentDetailsObj.email === studentEmail) {

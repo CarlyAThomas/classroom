@@ -15,6 +15,7 @@ import {
   checkIfStudentHasProgressDataForSuperblocksSelectedByTeacher
 } from '../../../util/api_proccesor';
 import redirectUser from '../../../util/redirectUser.js';
+import { getCurriculumForCertifications } from '../../../util/curriculumService';
 
 export async function getServerSideProps(context) {
   //making sure User is the teacher of this classsroom's dashboard
@@ -64,7 +65,30 @@ export async function getServerSideProps(context) {
 
   let totalChallenges = getTotalChallengesForSuperblocks(dashboardObjs);
 
-  let studentData = await fetchStudentData(context.params.id, context);
+  // Fetch curriculum data from GraphQL for this classroom's certifications
+  // Convert certification indices to names for the GraphQL query
+  const certificationNames = dashboardObjs
+    .map(blocks => (blocks.length > 0 ? blocks[0].superblock : null))
+    .filter(Boolean);
+
+  console.log(
+    `[Dashboard ${context.params.id}] Fetching curriculum for certifications:`,
+    certificationNames
+  );
+  const curriculumMap = await getCurriculumForCertifications(
+    certificationNames
+  );
+  console.log(
+    `[Dashboard ${context.params.id}] Curriculum map contains ${
+      Object.keys(curriculumMap).length
+    } challenges`
+  );
+
+  let studentData = await fetchStudentData(
+    context.params.id,
+    context,
+    curriculumMap
+  );
 
   // Temporary check to map/accomodate hard-coded mock student data progress in unselected superblocks by teacher
   let studentsAreEnrolledInSuperblocks =

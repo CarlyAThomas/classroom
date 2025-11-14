@@ -3,14 +3,19 @@ import challengeMap from '../data/challengeMap.json';
 /**
  * Resolves a full FCC Proper student data object (from the proxy) to the dashboard format.
  * @param {Object} studentDataFromFCC - { email1: [completedChallenges], email2: [completedChallenges], ... }
+ * @param {Object} [curriculumMap] - Optional curriculum map from GraphQL. If not provided, uses static challengeMap.json
  * @returns {Array} - Array of student objects: { email, certifications: [...] }
  */
-export function resolveAllStudentsToDashboardFormat(studentDataFromFCC) {
+export function resolveAllStudentsToDashboardFormat(
+  studentDataFromFCC,
+  curriculumMap = null
+) {
   if (!studentDataFromFCC || typeof studentDataFromFCC !== 'object') return [];
+  const mapToUse = curriculumMap || challengeMap;
   return Object.entries(studentDataFromFCC).map(
     ([email, completedChallenges]) => ({
       email,
-      ...buildStudentDashboardData(completedChallenges, challengeMap)
+      ...buildStudentDashboardData(completedChallenges, mapToUse)
     })
   );
 }

@@ -15,6 +15,7 @@ import React from 'react';
 import redirectUser from '../../../../../util/redirectUser.js';
 import styles from '../../../../../components/DetailsCSS.module.css';
 import DetailsDashboard from '../../../../../components/DetailsDashboard';
+import { getCurriculumForCertifications } from '../../../../../util/curriculumService';
 
 export async function getServerSideProps(context) {
   //making sure User is the teacher of this classsroom's dashboard
@@ -78,10 +79,30 @@ export async function getServerSideProps(context) {
   let superblocksDetailsJSONArray = await createSuperblockDashboardObject(
     superBlockJsons
   );
+
+  // Fetch curriculum data from GraphQL (will use cache from dashboard visit)
+  const certificationNames = superblocksDetailsJSONArray
+    .map(blocks => (blocks.length > 0 ? blocks[0].superblock : null))
+    .filter(Boolean);
+
+  console.log(
+    `[Student Details ${studentEmail}] Fetching curriculum for certifications:`,
+    certificationNames
+  );
+  const curriculumMap = await getCurriculumForCertifications(
+    certificationNames
+  );
+  console.log(
+    `[Student Details ${studentEmail}] Curriculum map contains ${
+      Object.keys(curriculumMap).length
+    } challenges`
+  );
+
   let studentData = await getIndividualStudentData(
     studentEmail,
     context.params.id,
-    context
+    context,
+    curriculumMap
   );
 
   return {
