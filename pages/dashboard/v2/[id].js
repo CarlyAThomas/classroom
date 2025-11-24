@@ -82,12 +82,21 @@ export async function getServerSideProps(context) {
     console.log('studentJSON', studentJSON);
     let indexToCheckProgress = studentData.indexOf(studentJSON);
     let isStudentEnrolledInAtLeastOneSuperblock =
-      studentsAreEnrolledInSuperblocks[indexToCheckProgress].every(
+      studentsAreEnrolledInSuperblocks[indexToCheckProgress].some(
         val => val === true
       );
 
     if (!isStudentEnrolledInAtLeastOneSuperblock) {
       studentData[indexToCheckProgress].certifications = [];
+    } else {
+      // Filter out certifications that are not selected by the teacher
+      studentJSON.certifications = studentJSON.certifications.filter(
+        (certification, certIndex) => {
+          return studentsAreEnrolledInSuperblocks[indexToCheckProgress][
+            certIndex
+          ];
+        }
+      );
     }
   });
 
