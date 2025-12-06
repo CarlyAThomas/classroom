@@ -31,7 +31,7 @@ If you have used GitHub Codespaces in other projects, doing the same in freeCode
 
 Within freeCodeCamp Classroom, GitHub Codespaces is on par with Gitpod so that you can use either.
 
-This [video](https://www.loom.com/share/37dcb9555ad642618d82619277daaa38?sid=c17189b2-5798-44c9-8b74-38749f3578e1) walks through the setup process on Github Codespaces.  Note that this video was recorded on Feb 10, 2025.  It is not guaranteed to be up to date with any new setup instructions added after that date. 
+This [video](https://www.loom.com/share/37dcb9555ad642618d82619277daaa38?sid=c17189b2-5798-44c9-8b74-38749f3578e1) walks through the setup process on Github Codespaces. Note that this video was recorded on Feb 10, 2025. It is not guaranteed to be up to date with any new setup instructions added after that date.
 
 ### Optional - GitPod Dev Environment
 
@@ -94,6 +94,8 @@ postgresql://postgres:password@localhost:5432/classroom
 7. Run `npm run develop`.
 8. Run `npm run mock-fcc-data`
 9. Run `npx prisma studio`
+
+**Note:** The classroom app runs on port 3001 and mock data on port 3002 to avoid conflicts with freeCodeCamp's main platform (ports 3000/8000).
 
 Need more help? Ran into issues? Check out this [guide](https://docs.google.com/document/d/1apfjzfIwDAfg6QQf2KD1E1aeD-KU7DEllwnH9Levq4A/edit) that walks you through all the steps of setting up the repository locally, without Docker.
 

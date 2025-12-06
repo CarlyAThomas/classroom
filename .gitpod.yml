@@ -3,8 +3,11 @@ image: gitpod/workspace-postgres
 ports:
   - port: 5432 #postgres
     onOpen: ignore
-  - port: 3000 #http
+  - port: 3001 #http (classroom app)
     onOpen: notify
+    visibility: public
+  - port: 3002 #mock data server
+    onOpen: ignore
     visibility: public
 
 tasks:

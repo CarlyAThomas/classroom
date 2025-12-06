@@ -8,15 +8,15 @@ echo 1.\) For dev environments, we have enabled use of the Github Provider. Plea
 echo https://docs.github.com/en/developers/apps/building-oauth-apps/creating-an-oauth-app
 echo
 echo The mock user data URL is:   
-echo https://3001-${GITPOD_WORKSPACE_URL:8}/data
+echo https://3002-${GITPOD_WORKSPACE_URL:8}/data
 echo
 echo The homepage is:   
-echo https://3000-${GITPOD_WORKSPACE_URL:8}
+echo https://3001-${GITPOD_WORKSPACE_URL:8}
 echo 
 echo The callback url is:
-echo https://3000-${GITPOD_WORKSPACE_URL:8}/api/auth/callback/github
+echo https://3001-${GITPOD_WORKSPACE_URL:8}/api/auth/callback/github
 echo
-echo 2.\) Set NEXTAUTH_URL in .env to https://3000-${GITPOD_WORKSPACE_URL:8}
+echo 2.\) Set NEXTAUTH_URL in .env to https://3001-${GITPOD_WORKSPACE_URL:8}
 echo
 echo 3.\) To setup GITHUB_ID and GITHUB_SECRET after setting up the OAuth app: 
 echo      -Your Client ID is shown in the OAuth app page. Copy and paste to GITHUB_ID. 
