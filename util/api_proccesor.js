@@ -5,7 +5,7 @@ export const AVAILABLE_SUPER_BLOCKS =
 /** ============ getAllTitlesAndDashedNamesSuperblockJSONArray() ============ */
 export async function getAllTitlesAndDashedNamesSuperblockJSONArray() {
   // calls this API https://www.freecodecamp.org/curriculum-data/v1/available-superblocks.json
-  console.log("Fetching superblocks data...");
+  console.log('Fetching superblocks data...');
   const superblocksres = await fetch(AVAILABLE_SUPER_BLOCKS);
 
   // the response of this structure is [ superblocks: [ {}, {}, ...etc] ]
@@ -305,11 +305,23 @@ If you are having issues with the selector, you should probably check there.
   return sortedBlocks.flat(1);
 }
 
-import { fetchFromFCC } from './fcc_proper';
+import {
+  getFccProperUserIdByEmail,
+  getStudentDataByUserIds
+} from './fcc_proper';
 import { resolveAllStudentsToDashboardFormat } from './challengeMapUtils';
-//import prisma from '../prisma/prisma';
+// TODO: Comment out the import prisma line.
+// This will cause the frontend to break because we can't import it in this file.
+// I haven't commented it out here due to ESLint rules stating that it must be defined.
+import prisma from '../prisma/prisma';
 
 /** ============ fetchStudentData() ============ */
+/**
+ * [Parameters] Looks for students in a classroom, and checks for their fccProperUserIds.
+ *
+ * [Returns] a 2d array of objects, where the array length is 1, and array[0] is length N, where array[0][N] are objects
+ * with block (not superblock) data.
+ */
 export async function fetchStudentData(classroomId, context) {
   try {
     // First, get the classroom data including the fccUserIds
@@ -318,9 +330,7 @@ export async function fetchStudentData(classroomId, context) {
         classroomId: classroomId
       },
       select: {
-        fccUserIds: true,
-        fccCertifications: true,
-        classroomName: true
+        fccUserIds: true
       }
     });
     if (!classroomData) {
@@ -337,8 +347,7 @@ export async function fetchStudentData(classroomId, context) {
       },
       select: {
         id: true,
-        email: true,
-        name: true
+        email: true
       }
     });
 
@@ -347,29 +356,37 @@ export async function fetchStudentData(classroomId, context) {
       return [];
     }
 
-    // Extract just the email addresses for the FCC API call
-    const studentEmails = students.map(student => student.email);
-
-    // Use fetchFromFCC instead of direct fetch
-    const data = await fetchFromFCC(
-      {
-        emails: studentEmails
-      },
-      context
+    // Call 1: Get FCC Proper User IDs for each student email
+    const userIdPromises = students.map(student =>
+      getFccProperUserIdByEmail(student.email, context)
     );
+    const fccUserIds = await Promise.all(userIdPromises);
 
-    // If FCC Proper returns { data: { email: [completedChallenges] } }, resolve to dashboard format
-    if (
-      data &&
-      data.data &&
-      typeof data.data === 'object' &&
-      !Array.isArray(data.data)
-    ) {
-      return resolveAllStudentsToDashboardFormat(data.data);
+    // Filter out null values and pair with student data
+    const validUserIds = fccUserIds.filter(id => id !== null);
+
+    if (validUserIds.length === 0) {
+      console.warn('No valid FCC User IDs found for students');
+      return [];
+    }
+
+    // Call 2: Get student data in batches (max 50 per request)
+    const batchSize = 50;
+    const allStudentData = {};
+
+    for (let i = 0; i < validUserIds.length; i += batchSize) {
+      const batch = validUserIds.slice(i, i + batchSize);
+      const batchData = await getStudentDataByUserIds(batch, context);
+      Object.assign(allStudentData, batchData);
+    }
+
+    // Resolve to dashboard format
+    if (allStudentData && typeof allStudentData === 'object') {
+      return resolveAllStudentsToDashboardFormat(allStudentData);
     }
 
     // Otherwise, return as-is (for legacy/mock data)
-    return data.data || [];
+    return [];
   } catch (error) {
     console.error('Error in fetchStudentData:', error);
     return [];
@@ -466,7 +483,7 @@ export function getStudentProgressInSuperblock(
 ) {
   let blockProgressDetails = [];
 
-  console.log("studentSuperblocksJSON", studentSuperblocksJSON);
+  console.log('studentSuperblocksJSON', studentSuperblocksJSON);
 
   studentSuperblocksJSON.certifications.forEach(superblockProgressJSON => {
     // the keys are dynamic which is why we have to use Object.keys(obj)
@@ -487,7 +504,7 @@ export function getStudentTotalChallengesCompletedInBlock(
   let totalChallengesCompletedInBlock = 0;
   studentProgressInBlock.forEach(blockProgressObj => {
     let blockTitle = Object.keys(blockProgressObj)[0];
-    console.log("blockprogressObj", blockProgressObj);
+    console.log('blockprogressObj', blockProgressObj);
 
     if (blockTitle === blockName) {
       totalChallengesCompletedInBlock =

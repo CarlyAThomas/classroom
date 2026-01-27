@@ -15,40 +15,50 @@ export default async function handler(req, res) {
 
     // Get token from cookie if it exists
     const cookieToken = cookies.jwt_access_token;
-    const { emails } = req.body;
+    const { targetUrl, ...bodyData } = req.body;
 
     if (!cookieToken) {
       console.log('Unauthorized!');
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    if (!emails || !Array.isArray(emails)) {
-      console.log('Missing or invalid emails array');
-      return res.status(400).json({ error: 'Missing emails array' });
+    if (!targetUrl) {
+      console.log('Missing targetUrl');
+      return res.status(400).json({ error: 'Missing targetUrl' });
     }
 
-    // Convert email array to comma-separated string
-    const emailsString = emails.join(',');
+    console.log('proxy hit', {
+      targetUrl,
+      bodyDataKeys: Object.keys(bodyData)
+    });
 
-    // Build the URL with query parameters
-    const fccUrl = `http://localhost:3000/api/protected/classroom/get-user-data?emails=${encodeURIComponent(
-      emailsString
-    )}`;
+    // Build the full FCC URL
+    const fccUrl = `http://localhost:3000${targetUrl}`;
 
     const headers = {
       'Content-Type': 'application/json',
       Cookie: `jwt_access_token=${cookieToken}`
     };
 
-    // Make the request - change to GET method and remove body
+    console.log('Forwarding request to FCC:', fccUrl);
+    console.log('Request headers:', headers);
+    console.log('Request body:', bodyData);
+
+    // Make POST request with body data
     const fccResponse = await fetch(fccUrl, {
-      method: 'GET',
+      method: 'POST',
       headers,
+      body: JSON.stringify(bodyData),
       credentials: 'include'
     });
 
     // Get the response data
     const data = await fccResponse.json();
+
+    console.log('data', data);
+
+    //TODO TEST: Create a student that doesn't exist in FCC, then try the API again.
+    // Does it fail? Does it just exclude that student?
 
     // Return the data to the client
     return res.status(fccResponse.status).json(data);

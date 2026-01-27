@@ -32,8 +32,7 @@ async function fetchFromFCC(options = {}, context = null) {
     method: 'POST',
     headers,
     body: JSON.stringify({
-      emails: options.emails || [],
-      options: options,
+      ...options,
       targetUrl: options.targetUrl
     }),
     credentials: 'include' // Important for cookies
@@ -46,6 +45,60 @@ async function fetchFromFCC(options = {}, context = null) {
   return response.json();
 }
 
+/**
+ * Get FCC Proper User ID for a single email (Call 1 of two-call validation)
+ * @param {string} email - Student email
+ * @param {Object} context - Next.js context (for server-side auth)
+ * @returns {Promise<string|null>} - FCC Proper user ID or null if not found
+ */
+async function getFccProperUserIdByEmail(email, context = null) {
+  const response = await fetchFromFCC(
+    {
+      email: email,
+      inClassroom: true, // Special flag for classroom app access
+      targetUrl: '/api/protected/classroom/get-user-id'
+    },
+    context
+  );
+
+  console.log('getFccProperUserIdByEmail response:', response);
+  console.log(
+    'getFccProperUserIdByEmail response.data?.userId:',
+    response?.userId
+  );
+
+  return response?.userId || null;
+}
+
+/**
+ * Get student progress data for multiple FCC Proper User IDs (Call 2 of two-call validation)
+ * @param {string[]} userIds - Array of FCC Proper user IDs (max 50)
+ * @param {Object} context - Next.js context (for server-side auth)
+ * @returns {Promise<Object>} - { userId: [completedChallenges], ... }
+ */
+async function getStudentDataByUserIds(userIds, context = null) {
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    throw new Error('userIds must be a non-empty array');
+  }
+
+  if (userIds.length > 50) {
+    throw new Error('Maximum 50 user IDs allowed per request');
+  }
+
+  const response = await fetchFromFCC(
+    {
+      userIds: userIds,
+      inClassroom: true,
+      targetUrl: '/api/protected/classroom/get-user-data'
+    },
+    context
+  );
+
+  return response.data || {};
+}
+
 module.exports = {
-  fetchFromFCC
+  fetchFromFCC,
+  getFccProperUserIdByEmail,
+  getStudentDataByUserIds
 };
