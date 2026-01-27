@@ -1,22 +1,22 @@
-export const FCC_BASE_URL = 'https://www.freecodecamp.org/curriculum-data/v1/';
+export const FCC_BASE_URL = 'https://www.freecodecamp.org/curriculum-data/v2';
 export const AVAILABLE_SUPER_BLOCKS =
-  FCC_BASE_URL + 'available-superblocks.json';
+  FCC_BASE_URL + '/available-superblocks.json';
 
 /** ============ getAllTitlesAndDashedNamesSuperblockJSONArray() ============ */
 export async function getAllTitlesAndDashedNamesSuperblockJSONArray() {
-  // calls this API https://www.freecodecamp.org/curriculum-data/v1/available-superblocks.json
-  console.log('Fetching superblocks data...');
+  // calls this API https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json
   const superblocksres = await fetch(AVAILABLE_SUPER_BLOCKS);
 
-  // the response of this structure is [ superblocks: [ {}, {}, ...etc] ]
+  // v2 response structure is { superblocks: { core: [], legacy: [], english: [], extra: [], professional: [] } }
   const curriculumData = await superblocksres.json();
-  // console.log(
-  //   'curriculumData.superblocks',
-  //   curriculumData.superblocks
-  // );
 
-  // which is why we return curriculumData.superblocks
-  return curriculumData.superblocks;
+  // Remove legacy superblocks - we only want current curriculum (core, english, extra, professional)
+  // eslint-disable-next-line no-unused-vars
+  const { legacy, ...currentCategories } = curriculumData.superblocks;
+
+  // Flatten the v2 structure into a single array like v1 had
+  const categories = Object.values(currentCategories);
+  return categories.flat();
 }
 
 /** ============ getAllSuperblockTitlesAndDashedNames() ============ */
@@ -101,7 +101,7 @@ export function checkIfStudentHasProgressDataForSuperblocksSelectedByTeacher(
  * block[0] is the name of the course
  * block[1] is a dictionary {desc, challenges}
  * Example Usage:
- * sortSuperBlocks("2022/responsive-web-design.json", "https://www.freecodecamp.org/curriculum-data/v1/2022/responsive-web-design.json")
+ * sortSuperBlocks("2022/responsive-web-design.json", "https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json")
  *
  */
 export function sortSuperBlocks(superblock) {
@@ -112,7 +112,7 @@ export function sortSuperBlocks(superblock) {
 /** ============ getDashedNamesURLs(fccCertifications) ============ */
 /*
  * [Parameters] an array of indices as a parameter.
- * Those indices correspond to an index in an array of objects containing superblock data at a JSON endpoint (https://www.freecodecamp.org/curriculum-data/v1/available-superblocks.json)
+ * Those indices correspond to an index in an array of objects containing superblock data at a JSON endpoint (https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json)
  * The array of indices is stored in Prisma as fccCertificates (see const certificationNumbers in [id].js).
  *
  * [Returns] an array of URL endpoints where JSON for superblocks is accessed.
@@ -123,9 +123,9 @@ export function sortSuperBlocks(superblock) {
  *
  * Example output:
  * [
- * 'https://www.freecodecamp.org/curriculum-data/v1/2022/responsive-web-design.json',
- * 'https://www.freecodecamp.org/curriculum-data/v1/responsive-web-design.json',
- * 'https://www.freecodecamp.org/curriculum-data/v1/back-end-development-and-apis.json'
+ * 'https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json',
+ * 'https://www.freecodecamp.org/curriculum-data/v2/responsive-web-design.json',
+ * 'https://www.freecodecamp.org/curriculum-data/v2/back-end-development-and-apis.json'
  * ]
  *
  * */
@@ -142,7 +142,7 @@ export async function getDashedNamesURLs(fccCertifications) {
 /** ============ getNonDashedNamesURLs([0,1,2) ============ */
 /**
  * The parameter relates to the index found at the following API response
- * https://www.freecodecamp.org/curriculum-data/v1/available-superblocks.json
+ * https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json
  *
  * Context: The way we know which superblocks are assigned in the classroom
  * is by storing the indicies in our DB (Prisma to access/write)
@@ -175,8 +175,8 @@ export async function getNonDashedNamesURLs(fccCertificationsIndex) {
  *
  * Example usage:
  * getSuperBlockJsons([
- * 'https://www.freecodecamp.org/curriculum-data/v1/2022/responsive-web-design.json',
- * 'https://www.freecodecamp.org/curriculum-data/v1/javascript-algorithms-and-data-structures.json'
+ * 'https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json',
+ * 'https://www.freecodecamp.org/curriculum-data/v2/javascript-algorithms-and-data-structures.json'
  * ])
  *
  *
