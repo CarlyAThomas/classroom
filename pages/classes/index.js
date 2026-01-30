@@ -44,13 +44,41 @@ export async function getServerSideProps(ctx) {
   );
 
   const superblocksres = await fetch(
-    'https://www.freecodecamp.org/curriculum-data/v1/available-superblocks.json'
+    'https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json'
   );
   const superblocksreq = await superblocksres.json();
   const blocks = [];
-  superblocksreq['superblocks'].map((x, i) =>
-    blocks.push({ value: i, label: x.dashedName, displayName: x.title })
-  );
+
+  if (Array.isArray(superblocksreq['superblocks'])) {
+    superblocksreq['superblocks'].map(x =>
+      blocks.push({
+        value: x.dashedName,
+        label: x.dashedName,
+        displayName: x.title
+      })
+    );
+  } else {
+    const categoriesOrder = [
+      'core',
+      'english',
+      'spanish',
+      'chinese',
+      'extra',
+      'professional',
+      'legacy'
+    ];
+    categoriesOrder.forEach(category => {
+      if (Array.isArray(superblocksreq['superblocks'][category])) {
+        superblocksreq['superblocks'][category].forEach(x =>
+          blocks.push({
+            value: x.dashedName,
+            label: x.dashedName,
+            displayName: x.title
+          })
+        );
+      }
+    });
+  }
   return {
     props: {
       userSession,
