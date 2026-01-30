@@ -1,22 +1,41 @@
 export const FCC_BASE_URL = 'https://www.freecodecamp.org/curriculum-data/v2';
+export const FCC_BASE_URL = 'https://www.freecodecamp.org/curriculum-data/v2';
 export const AVAILABLE_SUPER_BLOCKS =
+  FCC_BASE_URL + '/available-superblocks.json';
   FCC_BASE_URL + '/available-superblocks.json';
 
 /** ============ getAllTitlesAndDashedNamesSuperblockJSONArray() ============ */
 export async function getAllTitlesAndDashedNamesSuperblockJSONArray() {
   // calls this API https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json
+  // calls this API https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json
   const superblocksres = await fetch(AVAILABLE_SUPER_BLOCKS);
 
   // v2 response structure is { superblocks: { core: [], legacy: [], english: [], extra: [], professional: [] } }
+  // v1 response structure is { superblocks: [ {}, {}, ...etc] }
   const curriculumData = await superblocksres.json();
 
-  // Remove legacy superblocks - we only want current curriculum (core, english, extra, professional)
-  // eslint-disable-next-line no-unused-vars
-  const { legacy, ...currentCategories } = curriculumData.superblocks;
+  if (Array.isArray(curriculumData.superblocks)) {
+    return curriculumData.superblocks;
+  }
 
-  // Flatten the v2 structure into a single array like v1 had
-  const categories = Object.values(currentCategories);
-  return categories.flat();
+  const categoriesOrder = [
+    'core',
+    'legacy',
+    'english',
+    'extra',
+    'professional'
+  ];
+
+  const orderedCategories = categoriesOrder
+    .filter(key => Array.isArray(curriculumData.superblocks?.[key]))
+    .map(key => curriculumData.superblocks[key]);
+
+  const remainingCategories = Object.keys(curriculumData.superblocks || {})
+    .filter(key => !categoriesOrder.includes(key))
+    .map(key => curriculumData.superblocks[key])
+    .filter(Array.isArray);
+
+  return [...orderedCategories, ...remainingCategories].flat();
 }
 
 /** ============ getAllSuperblockTitlesAndDashedNames() ============ */
@@ -102,6 +121,7 @@ export function checkIfStudentHasProgressDataForSuperblocksSelectedByTeacher(
  * block[1] is a dictionary {desc, challenges}
  * Example Usage:
  * sortSuperBlocks("2022/responsive-web-design.json", "https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json")
+ * sortSuperBlocks("2022/responsive-web-design.json", "https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json")
  *
  */
 export function sortSuperBlocks(superblock) {
@@ -112,7 +132,8 @@ export function sortSuperBlocks(superblock) {
 /** ============ getDashedNamesURLs(fccCertifications) ============ */
 /*
  * [Parameters] an array of indices as a parameter.
- * Those indices correspond to an index in an array of objects containing superblock data at a JSON endpoint (https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json)
+ * Those indices correspond to an index in the flattened superblocks list returned by
+ * https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json
  * The array of indices is stored in Prisma as fccCertificates (see const certificationNumbers in [id].js).
  *
  * [Returns] an array of URL endpoints where JSON for superblocks is accessed.
@@ -126,22 +147,26 @@ export function sortSuperBlocks(superblock) {
  * 'https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json',
  * 'https://www.freecodecamp.org/curriculum-data/v2/responsive-web-design.json',
  * 'https://www.freecodecamp.org/curriculum-data/v2/back-end-development-and-apis.json'
+ * 'https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json',
+ * 'https://www.freecodecamp.org/curriculum-data/v2/responsive-web-design.json',
+ * 'https://www.freecodecamp.org/curriculum-data/v2/back-end-development-and-apis.json'
  * ]
  *
  * */
 export async function getDashedNamesURLs(fccCertifications) {
-  const superblocksres = await fetch(AVAILABLE_SUPER_BLOCKS);
-
-  const curriculumData = await superblocksres.json();
+  if (!fccCertifications || fccCertifications.length === 0) {
+    return [];
+  }
 
   return fccCertifications.map(
-    x => FCC_BASE_URL + curriculumData['superblocks'][x]['dashedName'] + '.json'
+    dashedName => `${FCC_BASE_URL}/${dashedName}.json`
   );
 }
 
 /** ============ getNonDashedNamesURLs([0,1,2) ============ */
 /**
  * The parameter relates to the index found at the following API response
+ * https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json
  * https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json
  *
  * Context: The way we know which superblocks are assigned in the classroom
@@ -155,14 +180,20 @@ export async function getDashedNamesURLs(fccCertifications) {
  * on the relation on the indicies stored in Prisma (unded the
  * fccCertifications column): "Select certifications:"
  */
-export async function getNonDashedNamesURLs(fccCertificationsIndex) {
-  const superblocksres = await fetch(AVAILABLE_SUPER_BLOCKS);
+export async function getNonDashedNamesURLs(fccCertificationsDashedNames) {
+  if (
+    !fccCertificationsDashedNames ||
+    fccCertificationsDashedNames.length === 0
+  ) {
+    return [];
+  }
 
-  const curriculumData = await superblocksres.json();
+  const superblocks = await getAllTitlesAndDashedNamesSuperblockJSONArray();
 
-  return fccCertificationsIndex.map(
-    x => curriculumData['superblocks'][x]['title']
-  );
+  return fccCertificationsDashedNames.map(dashedName => {
+    const superblock = superblocks.find(sb => sb.dashedName === dashedName);
+    return superblock ? superblock.title : dashedName;
+  });
 }
 
 /** ============ getSuperBlockJsons(superblockURLS) ============ */
@@ -175,6 +206,8 @@ export async function getNonDashedNamesURLs(fccCertificationsIndex) {
  *
  * Example usage:
  * getSuperBlockJsons([
+ * 'https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json',
+ * 'https://www.freecodecamp.org/curriculum-data/v2/javascript-algorithms-and-data-structures.json'
  * 'https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json',
  * 'https://www.freecodecamp.org/curriculum-data/v2/javascript-algorithms-and-data-structures.json'
  * ])

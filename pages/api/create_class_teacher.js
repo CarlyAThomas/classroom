@@ -46,7 +46,7 @@ export default async function handle(req, res) {
       classroomName: data['classroomName'],
       description: data['description'],
       classroomTeacherId: data['classroomTeacherId'],
-      fccCertifications: data['fccCertifications']
+      fccCertifications: data['fccCertifications'] || []
     }
   });
   return res.json(createClassInDB);
