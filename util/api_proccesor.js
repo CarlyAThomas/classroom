@@ -305,10 +305,7 @@ If you are having issues with the selector, you should probably check there.
   return sortedBlocks.flat(1);
 }
 
-import {
-  getFccProperUserIdByEmail,
-  getStudentDataByUserIds
-} from './fcc_proper';
+import { getStudentDataByUserIds } from './fcc_proper';
 import { resolveAllStudentsToDashboardFormat } from './challengeMapUtils';
 // TODO: Comment out the import prisma line.
 // This will cause the frontend to break because we can't import it in this file.
@@ -346,8 +343,8 @@ export async function fetchStudentData(classroomId, context) {
         }
       },
       select: {
-        id: true,
-        email: true
+        email: true,
+        fccProperUserId: true
       }
     });
 
@@ -356,33 +353,32 @@ export async function fetchStudentData(classroomId, context) {
       return [];
     }
 
-    // Call 1: Get FCC Proper User IDs for each student email
-    const userIdPromises = students.map(student =>
-      getFccProperUserIdByEmail(student.email, context)
-    );
-    const fccUserIds = await Promise.all(userIdPromises);
+    // id -> email lookup
+    const idToEmail = new Map(students.map(s => [s.fccProperUserId, s.email]));
 
-    // Filter out null values and pair with student data
-    const validUserIds = fccUserIds.filter(id => id !== null);
+    const userIds = Array.from(idToEmail.keys());
 
-    if (validUserIds.length === 0) {
-      console.warn('No valid FCC User IDs found for students');
-      return [];
-    }
-
-    // Call 2: Get student data in batches (max 50 per request)
+    // Call: Get student data in batches (max 50 per request)
     const batchSize = 50;
-    const allStudentData = {};
+    const allStudentDataByEmail = {};
 
-    for (let i = 0; i < validUserIds.length; i += batchSize) {
-      const batch = validUserIds.slice(i, i + batchSize);
-      const batchData = await getStudentDataByUserIds(batch, context);
-      Object.assign(allStudentData, batchData);
+    for (let i = 0; i < userIds.length; i += batchSize) {
+      const batchIds = userIds.slice(i, i + batchSize);
+
+      const batchDataById = await getStudentDataByUserIds(batchIds, context);
+
+      // Remap keys from userId -> email
+      Object.entries(batchDataById).forEach(([userId, value]) => {
+        const email = idToEmail.get(userId);
+        if (email) {
+          allStudentDataByEmail[email] = value;
+        }
+      });
     }
 
     // Resolve to dashboard format
-    if (allStudentData && typeof allStudentData === 'object') {
-      return resolveAllStudentsToDashboardFormat(allStudentData);
+    if (Object.keys(allStudentDataByEmail).length > 0) {
+      return resolveAllStudentsToDashboardFormat(allStudentDataByEmail);
     }
 
     // Otherwise, return as-is (for legacy/mock data)

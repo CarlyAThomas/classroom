@@ -40,10 +40,6 @@ export default async function handler(req, res) {
       Cookie: `jwt_access_token=${cookieToken}`
     };
 
-    console.log('Forwarding request to FCC:', fccUrl);
-    console.log('Request headers:', headers);
-    console.log('Request body:', bodyData);
-
     // Make POST request with body data
     const fccResponse = await fetch(fccUrl, {
       method: 'POST',
@@ -54,11 +50,6 @@ export default async function handler(req, res) {
 
     // Get the response data
     const data = await fccResponse.json();
-
-    console.log('data', data);
-
-    //TODO TEST: Create a student that doesn't exist in FCC, then try the API again.
-    // Does it fail? Does it just exclude that student?
 
     // Return the data to the client
     return res.status(fccResponse.status).json(data);

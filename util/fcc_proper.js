@@ -46,7 +46,7 @@ async function fetchFromFCC(options = {}, context = null) {
 }
 
 /**
- * Get FCC Proper User ID for a single email (Call 1 of two-call validation)
+ * Get FCC Proper User ID for a single email
  * @param {string} email - Student email
  * @param {Object} context - Next.js context (for server-side auth)
  * @returns {Promise<string|null>} - FCC Proper user ID or null if not found
@@ -71,7 +71,7 @@ async function getFccProperUserIdByEmail(email, context = null) {
 }
 
 /**
- * Get student progress data for multiple FCC Proper User IDs (Call 2 of two-call validation)
+ * Get student progress data for multiple FCC Proper User IDs
  * @param {string[]} userIds - Array of FCC Proper user IDs (max 50)
  * @param {Object} context - Next.js context (for server-side auth)
  * @returns {Promise<Object>} - { userId: [completedChallenges], ... }
