@@ -164,15 +164,6 @@ export async function getSuperblockTitlesInClassroomByIndex(
     normalizedDashedNames
   );
 
-  console.log(
-    '[getSuperblockTitlesInClassroomByIndex] Input:',
-    fccCertificationsDashedNames
-  );
-  console.log(
-    '[getSuperblockTitlesInClassroomByIndex] Expanded:',
-    expandedDashedNames
-  );
-
   return orderedDashedNames.map(dashedName => {
     const superblock = allSuperblockTitles.find(
       sb => sb.superblockDashedName === dashedName
@@ -257,20 +248,15 @@ export function sortSuperBlocks(superblock) {
  *
  * */
 export async function getDashedNamesURLs(fccCertifications) {
-  console.log('[getDashedNamesURLs] Input:', fccCertifications);
   if (!fccCertifications || fccCertifications.length === 0) {
     return [];
   }
 
   const expandedDashedNames = expandTieredSuperblocks(fccCertifications);
 
-  console.log('[getDashedNamesURLs] Expanded:', expandedDashedNames);
-
   const urls = expandedDashedNames.map(
     dashedName => `${FCC_BASE_URL}/${dashedName}.json`
   );
-
-  console.log('[getDashedNamesURLs] Output URLs:', urls);
   return urls;
 }
 
@@ -333,19 +319,12 @@ export async function getNonDashedNamesURLs(fccCertificationsDashedNames) {
  *
  * */
 export async function getSuperBlockJsons(superblockURLS) {
-  console.log('[getSuperBlockJsons] Fetching', superblockURLS.length, 'URLs');
   let responses = await Promise.all(
     superblockURLS.map(async currUrl => {
       let currResponse = await fetch(currUrl);
       let superblockJSON = currResponse.json();
       return superblockJSON;
     })
-  );
-  console.log(
-    '[getSuperBlockJsons] Got',
-    responses.length,
-    'JSONs. Keys:',
-    responses.map(r => Object.keys(r)[0])
   );
   return responses;
 }
@@ -393,11 +372,6 @@ export async function getSuperBlockJsons(superblockURLS) {
 export async function createSuperblockDashboardObject(superblock) {
   let superblockDashedNamesAndTitlesArray =
     await getAllSuperblockTitlesAndDashedNames();
-
-  console.log(
-    '[createSuperblockDashboardObject] Input superblocks:',
-    superblock.length
-  );
 
   let sortedBlocks = superblock.map(currBlock => {
     let certification = sortSuperblocksByDisplayOrder(
@@ -506,22 +480,6 @@ If you are having issues with the selector, you should probably check there.
   });
   // Since we return new arrays at every map, we have to flatten our 3D array down to 2D.
   const flattened = sortedBlocks.flat(2);
-  console.log(
-    '[createSuperblockDashboardObject] Returning',
-    flattened.length,
-    'blocks'
-  );
-  if (flattened.length > 0) {
-    console.log(
-      '  Sample blocks:',
-      flattened
-        .slice(0, 2)
-        .map(
-          b =>
-            `${b.superblock}>${b.dashedName}(${b.allChallenges.length} challenges)`
-        )
-    );
-  }
   return flattened;
 }
 
@@ -547,11 +505,6 @@ export async function getIndividualStudentData(studentEmail) {
 
 /** ============ getTotalChallengesForSuperblocks(superblockDasboardObj) ============ */
 export function getTotalChallengesForSuperblocks(superblockDasboardObj) {
-  console.log(
-    '[getTotalChallengesForSuperblocks] Input:',
-    superblockDasboardObj.length,
-    'entries'
-  );
   let totalChallengesInSuperblock = 0;
   superblockDasboardObj.forEach(blockEntry => {
     if (Array.isArray(blockEntry)) {
@@ -563,10 +516,6 @@ export function getTotalChallengesForSuperblocks(superblockDasboardObj) {
     totalChallengesInSuperblock += blockEntry?.allChallenges?.length || 0;
   });
 
-  console.log(
-    '[getTotalChallengesForSuperblocks] Total:',
-    totalChallengesInSuperblock
-  );
   return totalChallengesInSuperblock;
 }
 
