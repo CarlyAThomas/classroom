@@ -1,12 +1,96 @@
 export const FCC_BASE_URL = 'https://www.freecodecamp.org/curriculum-data/v2';
-export const FCC_BASE_URL = 'https://www.freecodecamp.org/curriculum-data/v2';
 export const AVAILABLE_SUPER_BLOCKS =
   FCC_BASE_URL + '/available-superblocks.json';
-  FCC_BASE_URL + '/available-superblocks.json';
+
+const TIERED_SUPERBLOCK_REQUIREMENTS = {
+  'full-stack-developer-v9': [
+    'responsive-web-design-v9',
+    'javascript-v9',
+    'front-end-development-libraries-v9',
+    'python-v9',
+    'relational-databases-v9',
+    'back-end-development-and-apis',
+    'back-end-development-and-apis-v9',
+    'full-stack-developer-v9'
+  ],
+  'back-end-development-and-apis-v9': [
+    'back-end-development-and-apis',
+    'back-end-development-and-apis-v9'
+  ]
+};
+
+const SUPERBLOCK_DISPLAY_ALIASES = {
+  'back-end-development-and-apis': 'back-end-development-and-apis-v9'
+};
+
+const SUPERBLOCK_DISPLAY_ORDER = [
+  'responsive-web-design-v9',
+  'javascript-v9',
+  'front-end-development-libraries-v9',
+  'python-v9',
+  'relational-databases-v9',
+  'back-end-development-and-apis-v9',
+  'full-stack-developer-v9',
+  'a2-english-for-developers',
+  'b1-english-for-developers',
+  'a1-professional-spanish',
+  'a1-professional-chinese',
+  'the-odin-project',
+  'coding-interview-prep',
+  'project-euler',
+  'rosetta-code',
+  'foundational-c-sharp-with-microsoft'
+];
+
+function expandTieredSuperblocks(dashedNames = []) {
+  const expanded = new Set();
+
+  dashedNames.forEach(name => {
+    const requirements = TIERED_SUPERBLOCK_REQUIREMENTS[name];
+    if (requirements) {
+      requirements.forEach(req => expanded.add(req));
+    } else {
+      expanded.add(name);
+    }
+  });
+
+  return Array.from(expanded);
+}
+
+function normalizeSuperblockDashedName(dashedName) {
+  return SUPERBLOCK_DISPLAY_ALIASES[dashedName] || dashedName;
+}
+
+function sortSuperblocksByDisplayOrder(dashedNames = []) {
+  const orderMap = new Map(
+    SUPERBLOCK_DISPLAY_ORDER.map((name, index) => [name, index])
+  );
+  return [...dashedNames].sort((a, b) => {
+    const aIndex = orderMap.has(a) ? orderMap.get(a) : Number.MAX_SAFE_INTEGER;
+    const bIndex = orderMap.has(b) ? orderMap.get(b) : Number.MAX_SAFE_INTEGER;
+    if (aIndex !== bIndex) return aIndex - bIndex;
+    return a.localeCompare(b);
+  });
+}
+
+export function orderCertificationOptions(options = []) {
+  const orderMap = new Map(
+    SUPERBLOCK_DISPLAY_ORDER.map((name, index) => [name, index])
+  );
+  return [...options].sort((a, b) => {
+    const aIndex = orderMap.has(a.value)
+      ? orderMap.get(a.value)
+      : Number.MAX_SAFE_INTEGER;
+    const bIndex = orderMap.has(b.value)
+      ? orderMap.get(b.value)
+      : Number.MAX_SAFE_INTEGER;
+    if (aIndex !== bIndex) return aIndex - bIndex;
+    return a.displayName.localeCompare(b.displayName);
+  });
+}
 
 /** ============ getAllTitlesAndDashedNamesSuperblockJSONArray() ============ */
 export async function getAllTitlesAndDashedNamesSuperblockJSONArray() {
-  // calls this API https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json
   // calls this API https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json
   const superblocksres = await fetch(AVAILABLE_SUPER_BLOCKS);
 
@@ -61,23 +145,31 @@ export async function getAllSuperblockTitlesAndDashedNames() {
       );
     }
   );
-  // console.log(
-  //   'superblockDashedNameToTitleArrayMapping',
-  //   superblockDashedNameToTitleArrayMapping
-  // );
   return superblockDashedNameToTitleArrayMapping;
 }
 
-/** ============ getSuperblockTitlesInClassroomByIndex(fccCertificationsArrayOfIndicies) ============ */
-// The reason we use an array of indicies is because that is how the data is stored in the Classroom table after class creation, see ClassInviteTable.js and modal.js component for more context.
+/** ============ getSuperblockTitlesInClassroomByIndex(fccCertificationsDashedNames) ============ */
+// Now accepts dashed names stored in fccCertifications and looks up titles by property.
 export async function getSuperblockTitlesInClassroomByIndex(
-  fccCertificationsArrayOfIndicies
+  fccCertificationsDashedNames
 ) {
   let allSuperblockTitles = await getAllSuperblockTitlesAndDashedNames();
-
-  return fccCertificationsArrayOfIndicies.map(
-    x => allSuperblockTitles[x].superblockReadableTitle
+  const expandedDashedNames = expandTieredSuperblocks(
+    fccCertificationsDashedNames
   );
+  const normalizedDashedNames = expandedDashedNames
+    .map(normalizeSuperblockDashedName)
+    .filter((name, index, arr) => arr.indexOf(name) === index);
+  const orderedDashedNames = sortSuperblocksByDisplayOrder(
+    normalizedDashedNames
+  );
+
+  return orderedDashedNames.map(dashedName => {
+    const superblock = allSuperblockTitles.find(
+      sb => sb.superblockDashedName === dashedName
+    );
+    return superblock ? superblock.superblockReadableTitle : dashedName;
+  });
 }
 
 /** ============ checkIfStudentHasProgressDataForSuperblock(studentJSON, superblockDashboardObj) ============ */
@@ -92,8 +184,14 @@ export function checkIfStudentHasProgressDataForSuperblocksSelectedByTeacher(
 
   let superblockTitlesSelectedByTeacher = [];
 
-  superblockDashboardObj.forEach(superblockObj => {
-    superblockTitlesSelectedByTeacher.push(superblockObj[0].superblock);
+  superblockDashboardObj.forEach(blockEntry => {
+    const blockObj = Array.isArray(blockEntry) ? blockEntry[0] : blockEntry;
+    if (
+      blockObj?.superblock &&
+      !superblockTitlesSelectedByTeacher.includes(blockObj.superblock)
+    ) {
+      superblockTitlesSelectedByTeacher.push(blockObj.superblock);
+    }
   });
 
   let studentResponseDataHasSuperblockBooleanArray = [];
@@ -121,7 +219,6 @@ export function checkIfStudentHasProgressDataForSuperblocksSelectedByTeacher(
  * block[1] is a dictionary {desc, challenges}
  * Example Usage:
  * sortSuperBlocks("2022/responsive-web-design.json", "https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json")
- * sortSuperBlocks("2022/responsive-web-design.json", "https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json")
  *
  */
 export function sortSuperBlocks(superblock) {
@@ -147,9 +244,6 @@ export function sortSuperBlocks(superblock) {
  * 'https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json',
  * 'https://www.freecodecamp.org/curriculum-data/v2/responsive-web-design.json',
  * 'https://www.freecodecamp.org/curriculum-data/v2/back-end-development-and-apis.json'
- * 'https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json',
- * 'https://www.freecodecamp.org/curriculum-data/v2/responsive-web-design.json',
- * 'https://www.freecodecamp.org/curriculum-data/v2/back-end-development-and-apis.json'
  * ]
  *
  * */
@@ -158,15 +252,17 @@ export async function getDashedNamesURLs(fccCertifications) {
     return [];
   }
 
-  return fccCertifications.map(
+  const expandedDashedNames = expandTieredSuperblocks(fccCertifications);
+
+  const urls = expandedDashedNames.map(
     dashedName => `${FCC_BASE_URL}/${dashedName}.json`
   );
+  return urls;
 }
 
 /** ============ getNonDashedNamesURLs([0,1,2) ============ */
 /**
  * The parameter relates to the index found at the following API response
- * https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json
  * https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json
  *
  * Context: The way we know which superblocks are assigned in the classroom
@@ -206,8 +302,6 @@ export async function getNonDashedNamesURLs(fccCertificationsDashedNames) {
  *
  * Example usage:
  * getSuperBlockJsons([
- * 'https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json',
- * 'https://www.freecodecamp.org/curriculum-data/v2/javascript-algorithms-and-data-structures.json'
  * 'https://www.freecodecamp.org/curriculum-data/v2/2022/responsive-web-design.json',
  * 'https://www.freecodecamp.org/curriculum-data/v2/javascript-algorithms-and-data-structures.json'
  * ])
@@ -280,17 +374,65 @@ export async function createSuperblockDashboardObject(superblock) {
     await getAllSuperblockTitlesAndDashedNames();
 
   let sortedBlocks = superblock.map(currBlock => {
-    let certification = Object.keys(currBlock).map(certificationName => {
+    let certification = sortSuperblocksByDisplayOrder(
+      Object.keys(currBlock)
+    ).map(certificationName => {
       let superblockDashedNameAndTitle =
         superblockDashedNamesAndTitlesArray.find(
           superblockDashedNameAndTitleJSON =>
             superblockDashedNameAndTitleJSON['superblockDashedName'] ===
             certificationName
         );
+      const displaySuperblockDashedName = normalizeSuperblockDashedName(
+        superblockDashedNameAndTitle?.superblockDashedName || certificationName
+      );
+      const displaySuperblockTitle =
+        superblockDashedNamesAndTitlesArray.find(
+          superblockDashedNameAndTitleJSON =>
+            superblockDashedNameAndTitleJSON['superblockDashedName'] ===
+            displaySuperblockDashedName
+        )?.superblockReadableTitle || displaySuperblockDashedName;
 
-      let blockInfo = Object.entries(
-        currBlock[certificationName]['blocks']
-      ).map(([course]) => {
+      const curriculum = currBlock[certificationName] || {};
+      const legacyBlocks = curriculum.blocks;
+      const chapters = curriculum.chapters || [];
+      const v9BlocksFromModules = chapters.flatMap(chapter =>
+        (chapter.modules || []).flatMap(module => module.blocks || [])
+      );
+      const v9ExamFallbackBlocks = chapters
+        .filter(
+          chapter =>
+            chapter?.chapterType === 'exam' &&
+            (!chapter.modules || chapter.modules.length === 0)
+        )
+        .map((chapter, index) => ({
+          meta: {
+            dashedName: chapter.dashedName,
+            name: chapter.name,
+            blockType: 'exam',
+            order: 10000 + index,
+            challengeOrder: []
+          },
+          challenges: {
+            name: chapter.name,
+            order: 10000 + index,
+            challengeOrder: []
+          }
+        }));
+      const v9Blocks = [...v9BlocksFromModules, ...v9ExamFallbackBlocks];
+      const blocksSource = Array.isArray(legacyBlocks)
+        ? legacyBlocks
+        : v9Blocks.length
+        ? v9Blocks
+        : legacyBlocks || {};
+      const isBlocksArray = Array.isArray(blocksSource);
+      const normalizedBlocks = isBlocksArray
+        ? blocksSource
+        : blocksSource || {};
+
+      let blockInfo = (
+        isBlocksArray ? normalizedBlocks : Object.entries(normalizedBlocks)
+      ).map((blockEntry, index) => {
         /*
 The following object is necessary in order to sort our courses/superblocks correctly in order to pass them into our dashtabs.js component
 
@@ -304,28 +446,39 @@ selector: this is for our dashtabs component to have a unique selector for each 
 allChallenges: As the name implies, this holds all of our challenges (inside of the current block) in correct order
 The last bit is the order of the current block inside of the certification, not the challenges that exist inside of this block
 */
+        const course = isBlocksArray
+          ? blockEntry?.meta?.dashedName || blockEntry?.dashedName
+          : blockEntry[0];
+        const blockData = isBlocksArray ? blockEntry : blockEntry[1];
+        const blockMeta = blockData?.meta || {};
+        const challenges = blockData?.challenges || blockData;
+
+        const derivedChallenges = isBlocksArray
+          ? (blockMeta?.challengeOrder || [])
+              .map(challenge =>
+                typeof challenge === 'string' ? challenge : challenge?.id
+              )
+              .filter(Boolean)
+          : challenges?.challengeOrder;
+
+        const normalizedChallenges =
+          blockMeta?.blockType === 'exam' &&
+          (!derivedChallenges || derivedChallenges.length === 0)
+            ? ['__exam__']
+            : derivedChallenges;
+
         let currCourseBlock = {
-          superblock: superblockDashedNameAndTitle.superblockDashedName,
-          superblockReadableTitle:
-            superblockDashedNameAndTitle.superblockReadableTitle,
-          blockName:
-            currBlock[certificationName]['blocks'][course]['challenges'][
-              'name'
-            ],
+          superblock: displaySuperblockDashedName,
+          superblockReadableTitle: displaySuperblockTitle,
+          blockName: isBlocksArray ? blockMeta?.name : challenges?.name,
           /*
 This selector is changed inside of components/dashtabs.js
 If you are having issues with the selector, you should probably check there.
 */
           selector: course,
           dashedName: course,
-          allChallenges:
-            currBlock[certificationName]['blocks'][course]['challenges'][
-              'challengeOrder'
-            ],
-          order:
-            currBlock[certificationName]['blocks'][course]['challenges'][
-              'order'
-            ] ?? null
+          allChallenges: normalizedChallenges,
+          order: isBlocksArray ? blockMeta?.order ?? index : challenges?.order
         };
         return currCourseBlock;
       });
@@ -335,105 +488,20 @@ If you are having issues with the selector, you should probably check there.
     return certification;
   });
   // Since we return new arrays at every map, we have to flatten our 3D array down to 2D.
-  return sortedBlocks.flat(1);
+  const flattened = sortedBlocks.flat(2);
+  return flattened;
 }
 
-import {
-  getFccProperUserIdByEmail,
-  getStudentDataByUserIds
-} from './fcc_proper';
-import { resolveAllStudentsToDashboardFormat } from './challengeMapUtils';
-// TODO: Comment out the import prisma line.
-// This will cause the frontend to break because we can't import it in this file.
-// I haven't commented it out here due to ESLint rules stating that it must be defined.
-import prisma from '../prisma/prisma';
-
 /** ============ fetchStudentData() ============ */
-/**
- * [Parameters] Looks for students in a classroom, and checks for their fccProperUserIds.
- *
- * [Returns] a 2d array of objects, where the array length is 1, and array[0] is length N, where array[0][N] are objects
- * with block (not superblock) data.
- */
-export async function fetchStudentData(classroomId, context) {
-  try {
-    // First, get the classroom data including the fccUserIds
-    const classroomData = await prisma.classroom.findUnique({
-      where: {
-        classroomId: classroomId
-      },
-      select: {
-        fccUserIds: true
-      }
-    });
-    if (!classroomData) {
-      console.error('No classroom found with ID:', classroomId);
-      return [];
-    }
-
-    // Now get the users with those IDs
-    const students = await prisma.user.findMany({
-      where: {
-        id: {
-          in: classroomData.fccUserIds
-        }
-      },
-      select: {
-        id: true,
-        email: true
-      }
-    });
-
-    // If no students, return empty array
-    if (students.length === 0) {
-      return [];
-    }
-
-    // Call 1: Get FCC Proper User IDs for each student email
-    const userIdPromises = students.map(student =>
-      getFccProperUserIdByEmail(student.email, context)
-    );
-    const fccUserIds = await Promise.all(userIdPromises);
-
-    // Filter out null values and pair with student data
-    const validUserIds = fccUserIds.filter(id => id !== null);
-
-    if (validUserIds.length === 0) {
-      console.warn('No valid FCC User IDs found for students');
-      return [];
-    }
-
-    // Call 2: Get student data in batches (max 50 per request)
-    const batchSize = 50;
-    const allStudentData = {};
-
-    for (let i = 0; i < validUserIds.length; i += batchSize) {
-      const batch = validUserIds.slice(i, i + batchSize);
-      const batchData = await getStudentDataByUserIds(batch, context);
-      Object.assign(allStudentData, batchData);
-    }
-
-    // Resolve to dashboard format
-    if (allStudentData && typeof allStudentData === 'object') {
-      return resolveAllStudentsToDashboardFormat(allStudentData);
-    }
-
-    // Otherwise, return as-is (for legacy/mock data)
-    return [];
-  } catch (error) {
-    console.error('Error in fetchStudentData:', error);
-    return [];
-  }
+export async function fetchStudentData() {
+  let data = await fetch(process.env.MOCK_USER_DATA_URL);
+  return data.json();
 }
 
 /** ============ getIndividualStudentData(studentEmail) ============ */
 // Uses for the details page
-export async function getIndividualStudentData(
-  studentEmail,
-  classroomId,
-  context
-) {
-  let studentData = await fetchStudentData(classroomId, context);
+export async function getIndividualStudentData(studentEmail) {
+  let studentData = await fetchStudentData();
   let individualStudentObj = {};
   studentData.forEach(individualStudentDetailsObj => {
     if (individualStudentDetailsObj.email === studentEmail) {
@@ -447,10 +515,14 @@ export async function getIndividualStudentData(
 /** ============ getTotalChallengesForSuperblocks(superblockDasboardObj) ============ */
 export function getTotalChallengesForSuperblocks(superblockDasboardObj) {
   let totalChallengesInSuperblock = 0;
-  superblockDasboardObj.forEach(blockObjArray => {
-    blockObjArray.forEach(blockObj => {
-      totalChallengesInSuperblock += blockObj.allChallenges.length;
-    });
+  superblockDasboardObj.forEach(blockEntry => {
+    if (Array.isArray(blockEntry)) {
+      blockEntry.forEach(blockObj => {
+        totalChallengesInSuperblock += blockObj?.allChallenges?.length || 0;
+      });
+      return;
+    }
+    totalChallengesInSuperblock += blockEntry?.allChallenges?.length || 0;
   });
 
   return totalChallengesInSuperblock;
@@ -516,8 +588,6 @@ export function getStudentProgressInSuperblock(
 ) {
   let blockProgressDetails = [];
 
-  console.log('studentSuperblocksJSON', studentSuperblocksJSON);
-
   studentSuperblocksJSON.certifications.forEach(superblockProgressJSON => {
     // the keys are dynamic which is why we have to use Object.keys(obj)
     let superblockDashedName = Object.keys(superblockProgressJSON)[0];
@@ -537,7 +607,6 @@ export function getStudentTotalChallengesCompletedInBlock(
   let totalChallengesCompletedInBlock = 0;
   studentProgressInBlock.forEach(blockProgressObj => {
     let blockTitle = Object.keys(blockProgressObj)[0];
-    console.log('blockprogressObj', blockProgressObj);
 
     if (blockTitle === blockName) {
       totalChallengesCompletedInBlock =
