@@ -409,6 +409,7 @@ export async function createSuperblockDashboardObject(superblock) {
           meta: {
             dashedName: chapter.dashedName,
             name: chapter.name,
+            blockType: 'exam',
             order: 10000 + index,
             challengeOrder: []
           },
@@ -452,6 +453,20 @@ The last bit is the order of the current block inside of the certification, not 
         const blockMeta = blockData?.meta || {};
         const challenges = blockData?.challenges || blockData;
 
+        const derivedChallenges = isBlocksArray
+          ? (blockMeta?.challengeOrder || [])
+              .map(challenge =>
+                typeof challenge === 'string' ? challenge : challenge?.id
+              )
+              .filter(Boolean)
+          : challenges?.challengeOrder;
+
+        const normalizedChallenges =
+          blockMeta?.blockType === 'exam' &&
+          (!derivedChallenges || derivedChallenges.length === 0)
+            ? ['__exam__']
+            : derivedChallenges;
+
         let currCourseBlock = {
           superblock: displaySuperblockDashedName,
           superblockReadableTitle: displaySuperblockTitle,
@@ -462,13 +477,7 @@ If you are having issues with the selector, you should probably check there.
 */
           selector: course,
           dashedName: course,
-          allChallenges: isBlocksArray
-            ? (blockMeta?.challengeOrder || [])
-                .map(challenge =>
-                  typeof challenge === 'string' ? challenge : challenge?.id
-                )
-                .filter(Boolean)
-            : challenges?.challengeOrder,
+          allChallenges: normalizedChallenges,
           order: isBlocksArray ? blockMeta?.order ?? index : challenges?.order
         };
         return currCourseBlock;

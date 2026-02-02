@@ -62,6 +62,54 @@
               }
             ]
           }
+        },
+        {
+          "responsive-web-design-v9": {
+            "blocks": [
+              {
+                "workshop-curriculum-outline": {
+                  "completedChallenges": [
+                    {
+                      "id": "6823ac607bfdbc46331b2559",
+                      "challengeName": "Step 1",
+                      "completedDate": 1746446400000,
+                      "files": []
+                    },
+                    {
+                      "id": "682ba2318000b62f179bdf04",
+                      "challengeName": "Step 2",
+                      "completedDate": 1749569400000,
+                      "files": []
+                    }
+                  ]
+                }
+              },
+              {
+                "lab-debug-camperbots-profile-page": {
+                  "completedChallenges": [
+                    {
+                      "id": "682cd206883fc7b25eb539c5",
+                      "challengeName": "Step 3",
+                      "completedDate": 1753002900000,
+                      "files": []
+                    }
+                  ]
+                }
+              },
+              {
+                "exam-responsive-web-design-certification": {
+                  "completedChallenges": [
+                    {
+                      "id": "68db37350b398ecddd1f5dac",
+                      "challengeName": "Responsive Web Design Certification Exam",
+                      "completedDate": 1759663200000,
+                      "files": []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
         }
       ]
     },
@@ -96,6 +144,66 @@
                       "id": "587d824a367417b2b2512c46",
                       "challengeName": "Learn How JavaScript Assertions Work",
                       "completedDate": 47664591,
+                      "files": []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "javascript-v9": {
+            "blocks": [
+              {
+                "workshop-greeting-bot": {
+                  "completedChallenges": [
+                    {
+                      "id": "671a9a0a140c2b9d6a75629f",
+                      "challengeName": "Greeting Bot",
+                      "completedDate": 1746446400000,
+                      "files": []
+                    }
+                  ]
+                }
+              },
+              {
+                "lab-javascript-trivia-bot": {
+                  "completedChallenges": [
+                    {
+                      "id": "671a9a0a140c2b9d6a7562a0",
+                      "challengeName": "JavaScript Trivia Bot",
+                      "completedDate": 1755542700000,
+                      "files": []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "back-end-development-and-apis-v9": {
+            "blocks": [
+              {
+                "managing-packages-with-npm": {
+                  "completedChallenges": [
+                    {
+                      "id": "587d7fb3367417b2b2512bfb",
+                      "challengeName": "How to Use package.json",
+                      "completedDate": 1757685600000,
+                      "files": []
+                    }
+                  ]
+                }
+              },
+              {
+                "back-end-development-and-apis-certification-exam": {
+                  "completedChallenges": [
+                    {
+                      "id": "68db37350b398ecddd1f5ddb",
+                      "challengeName": "Back End Development and APIs Certification Exam",
+                      "completedDate": 1759663200000,
                       "files": []
                     }
                   ]
