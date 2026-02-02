@@ -50,13 +50,15 @@ export async function getServerSideProps(ctx) {
   const blocks = [];
 
   if (Array.isArray(superblocksreq['superblocks'])) {
-    superblocksreq['superblocks'].map(x =>
-      blocks.push({
-        value: x.dashedName,
-        label: x.dashedName,
-        displayName: x.title
-      })
-    );
+    superblocksreq['superblocks']
+      .filter(x => !x.title?.toLowerCase().includes('legacy'))
+      .map(x =>
+        blocks.push({
+          value: x.dashedName,
+          label: x.dashedName,
+          displayName: x.title
+        })
+      );
   } else {
     const categoriesOrder = [
       'core',
@@ -64,8 +66,7 @@ export async function getServerSideProps(ctx) {
       'spanish',
       'chinese',
       'extra',
-      'professional',
-      'legacy'
+      'professional'
     ];
     categoriesOrder.forEach(category => {
       if (Array.isArray(superblocksreq['superblocks'][category])) {
