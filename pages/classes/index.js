@@ -5,6 +5,7 @@ import Navbar from '../../components/navbar';
 import Link from 'next/link';
 import { getSession } from 'next-auth/react';
 import Modal from '../../components/modal';
+import { orderCertificationOptions } from '../../util/api_proccesor';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useState } from 'react';
@@ -85,7 +86,7 @@ export async function getServerSideProps(ctx) {
       userSession,
       classrooms: output,
       user: userInfo[0].id,
-      certificationNames: blocks
+      certificationNames: orderCertificationOptions(blocks)
     }
   };
 }
