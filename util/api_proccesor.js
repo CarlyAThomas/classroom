@@ -2,6 +2,46 @@ export const FCC_BASE_URL = 'https://www.freecodecamp.org/curriculum-data/v2';
 export const AVAILABLE_SUPER_BLOCKS =
   FCC_BASE_URL + '/available-superblocks.json';
 
+const TIERED_SUPERBLOCK_REQUIREMENTS = {
+  'full-stack-developer-v9': [
+    'responsive-web-design-v9',
+    'javascript-v9',
+    'front-end-development-libraries-v9',
+    'python-v9',
+    'relational-databases-v9',
+    'back-end-development-and-apis',
+    'back-end-development-and-apis-v9',
+    'full-stack-developer-v9'
+  ],
+  'back-end-development-and-apis-v9': [
+    'back-end-development-and-apis',
+    'back-end-development-and-apis-v9'
+  ]
+};
+
+const SUPERBLOCK_DISPLAY_ALIASES = {
+  'back-end-development-and-apis': 'back-end-development-and-apis-v9'
+};
+
+function expandTieredSuperblocks(dashedNames = []) {
+  const expanded = new Set();
+
+  dashedNames.forEach(name => {
+    const requirements = TIERED_SUPERBLOCK_REQUIREMENTS[name];
+    if (requirements) {
+      requirements.forEach(req => expanded.add(req));
+    } else {
+      expanded.add(name);
+    }
+  });
+
+  return Array.from(expanded);
+}
+
+function normalizeSuperblockDashedName(dashedName) {
+  return SUPERBLOCK_DISPLAY_ALIASES[dashedName] || dashedName;
+}
+
 /** ============ getAllTitlesAndDashedNamesSuperblockJSONArray() ============ */
 export async function getAllTitlesAndDashedNamesSuperblockJSONArray() {
   // calls this API https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json
@@ -67,8 +107,23 @@ export async function getSuperblockTitlesInClassroomByIndex(
   fccCertificationsDashedNames
 ) {
   let allSuperblockTitles = await getAllSuperblockTitlesAndDashedNames();
+  const expandedDashedNames = expandTieredSuperblocks(
+    fccCertificationsDashedNames
+  );
+  const normalizedDashedNames = expandedDashedNames
+    .map(normalizeSuperblockDashedName)
+    .filter((name, index, arr) => arr.indexOf(name) === index);
 
-  return fccCertificationsDashedNames.map(dashedName => {
+  console.log(
+    '[getSuperblockTitlesInClassroomByIndex] Input:',
+    fccCertificationsDashedNames
+  );
+  console.log(
+    '[getSuperblockTitlesInClassroomByIndex] Expanded:',
+    expandedDashedNames
+  );
+
+  return normalizedDashedNames.map(dashedName => {
     const superblock = allSuperblockTitles.find(
       sb => sb.superblockDashedName === dashedName
     );
@@ -152,13 +207,21 @@ export function sortSuperBlocks(superblock) {
  *
  * */
 export async function getDashedNamesURLs(fccCertifications) {
+  console.log('[getDashedNamesURLs] Input:', fccCertifications);
   if (!fccCertifications || fccCertifications.length === 0) {
     return [];
   }
 
-  return fccCertifications.map(
+  const expandedDashedNames = expandTieredSuperblocks(fccCertifications);
+
+  console.log('[getDashedNamesURLs] Expanded:', expandedDashedNames);
+
+  const urls = expandedDashedNames.map(
     dashedName => `${FCC_BASE_URL}/${dashedName}.json`
   );
+
+  console.log('[getDashedNamesURLs] Output URLs:', urls);
+  return urls;
 }
 
 /** ============ getNonDashedNamesURLs([0,1,2) ============ */
@@ -220,12 +283,19 @@ export async function getNonDashedNamesURLs(fccCertificationsDashedNames) {
  *
  * */
 export async function getSuperBlockJsons(superblockURLS) {
+  console.log('[getSuperBlockJsons] Fetching', superblockURLS.length, 'URLs');
   let responses = await Promise.all(
     superblockURLS.map(async currUrl => {
       let currResponse = await fetch(currUrl);
       let superblockJSON = currResponse.json();
       return superblockJSON;
     })
+  );
+  console.log(
+    '[getSuperBlockJsons] Got',
+    responses.length,
+    'JSONs. Keys:',
+    responses.map(r => Object.keys(r)[0])
   );
   return responses;
 }
@@ -274,6 +344,11 @@ export async function createSuperblockDashboardObject(superblock) {
   let superblockDashedNamesAndTitlesArray =
     await getAllSuperblockTitlesAndDashedNames();
 
+  console.log(
+    '[createSuperblockDashboardObject] Input superblocks:',
+    superblock.length
+  );
+
   let sortedBlocks = superblock.map(currBlock => {
     let certification = Object.keys(currBlock).map(certificationName => {
       let superblockDashedNameAndTitle =
@@ -282,12 +357,42 @@ export async function createSuperblockDashboardObject(superblock) {
             superblockDashedNameAndTitleJSON['superblockDashedName'] ===
             certificationName
         );
+      const displaySuperblockDashedName = normalizeSuperblockDashedName(
+        superblockDashedNameAndTitle?.superblockDashedName || certificationName
+      );
+      const displaySuperblockTitle =
+        superblockDashedNamesAndTitlesArray.find(
+          superblockDashedNameAndTitleJSON =>
+            superblockDashedNameAndTitleJSON['superblockDashedName'] ===
+            displaySuperblockDashedName
+        )?.superblockReadableTitle || displaySuperblockDashedName;
 
       const curriculum = currBlock[certificationName] || {};
       const legacyBlocks = curriculum.blocks;
-      const v9Blocks = (curriculum.chapters || []).flatMap(chapter =>
+      const chapters = curriculum.chapters || [];
+      const v9BlocksFromModules = chapters.flatMap(chapter =>
         (chapter.modules || []).flatMap(module => module.blocks || [])
       );
+      const v9ExamFallbackBlocks = chapters
+        .filter(
+          chapter =>
+            chapter?.chapterType === 'exam' &&
+            (!chapter.modules || chapter.modules.length === 0)
+        )
+        .map((chapter, index) => ({
+          meta: {
+            dashedName: chapter.dashedName,
+            name: chapter.name,
+            order: 10000 + index,
+            challengeOrder: []
+          },
+          challenges: {
+            name: chapter.name,
+            order: 10000 + index,
+            challengeOrder: []
+          }
+        }));
+      const v9Blocks = [...v9BlocksFromModules, ...v9ExamFallbackBlocks];
       const blocksSource = Array.isArray(legacyBlocks)
         ? legacyBlocks
         : v9Blocks.length
@@ -322,12 +427,8 @@ The last bit is the order of the current block inside of the certification, not 
         const challenges = blockData?.challenges || blockData;
 
         let currCourseBlock = {
-          superblock:
-            superblockDashedNameAndTitle?.superblockDashedName ||
-            certificationName,
-          superblockReadableTitle:
-            superblockDashedNameAndTitle?.superblockReadableTitle ||
-            certificationName,
+          superblock: displaySuperblockDashedName,
+          superblockReadableTitle: displaySuperblockTitle,
           blockName: isBlocksArray ? blockMeta?.name : challenges?.name,
           /*
 This selector is changed inside of components/dashtabs.js
@@ -352,7 +453,24 @@ If you are having issues with the selector, you should probably check there.
     return certification;
   });
   // Since we return new arrays at every map, we have to flatten our 3D array down to 2D.
-  return sortedBlocks.flat(2);
+  const flattened = sortedBlocks.flat(2);
+  console.log(
+    '[createSuperblockDashboardObject] Returning',
+    flattened.length,
+    'blocks'
+  );
+  if (flattened.length > 0) {
+    console.log(
+      '  Sample blocks:',
+      flattened
+        .slice(0, 2)
+        .map(
+          b =>
+            `${b.superblock}>${b.dashedName}(${b.allChallenges.length} challenges)`
+        )
+    );
+  }
+  return flattened;
 }
 
 /** ============ fetchStudentData() ============ */
@@ -377,6 +495,11 @@ export async function getIndividualStudentData(studentEmail) {
 
 /** ============ getTotalChallengesForSuperblocks(superblockDasboardObj) ============ */
 export function getTotalChallengesForSuperblocks(superblockDasboardObj) {
+  console.log(
+    '[getTotalChallengesForSuperblocks] Input:',
+    superblockDasboardObj.length,
+    'entries'
+  );
   let totalChallengesInSuperblock = 0;
   superblockDasboardObj.forEach(blockEntry => {
     if (Array.isArray(blockEntry)) {
@@ -388,6 +511,10 @@ export function getTotalChallengesForSuperblocks(superblockDasboardObj) {
     totalChallengesInSuperblock += blockEntry?.allChallenges?.length || 0;
   });
 
+  console.log(
+    '[getTotalChallengesForSuperblocks] Total:',
+    totalChallengesInSuperblock
+  );
   return totalChallengesInSuperblock;
 }
 
