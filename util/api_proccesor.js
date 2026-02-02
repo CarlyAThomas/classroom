@@ -23,6 +23,25 @@ const SUPERBLOCK_DISPLAY_ALIASES = {
   'back-end-development-and-apis': 'back-end-development-and-apis-v9'
 };
 
+const SUPERBLOCK_DISPLAY_ORDER = [
+  'responsive-web-design-v9',
+  'javascript-v9',
+  'front-end-development-libraries-v9',
+  'python-v9',
+  'relational-databases-v9',
+  'back-end-development-and-apis-v9',
+  'full-stack-developer-v9',
+  'a2-english-for-developers',
+  'b1-english-for-developers',
+  'a1-professional-spanish',
+  'a1-professional-chinese',
+  'the-odin-project',
+  'coding-interview-prep',
+  'project-euler',
+  'rosetta-code',
+  'foundational-c-sharp-with-microsoft'
+];
+
 function expandTieredSuperblocks(dashedNames = []) {
   const expanded = new Set();
 
@@ -40,6 +59,34 @@ function expandTieredSuperblocks(dashedNames = []) {
 
 function normalizeSuperblockDashedName(dashedName) {
   return SUPERBLOCK_DISPLAY_ALIASES[dashedName] || dashedName;
+}
+
+function sortSuperblocksByDisplayOrder(dashedNames = []) {
+  const orderMap = new Map(
+    SUPERBLOCK_DISPLAY_ORDER.map((name, index) => [name, index])
+  );
+  return [...dashedNames].sort((a, b) => {
+    const aIndex = orderMap.has(a) ? orderMap.get(a) : Number.MAX_SAFE_INTEGER;
+    const bIndex = orderMap.has(b) ? orderMap.get(b) : Number.MAX_SAFE_INTEGER;
+    if (aIndex !== bIndex) return aIndex - bIndex;
+    return a.localeCompare(b);
+  });
+}
+
+export function orderCertificationOptions(options = []) {
+  const orderMap = new Map(
+    SUPERBLOCK_DISPLAY_ORDER.map((name, index) => [name, index])
+  );
+  return [...options].sort((a, b) => {
+    const aIndex = orderMap.has(a.value)
+      ? orderMap.get(a.value)
+      : Number.MAX_SAFE_INTEGER;
+    const bIndex = orderMap.has(b.value)
+      ? orderMap.get(b.value)
+      : Number.MAX_SAFE_INTEGER;
+    if (aIndex !== bIndex) return aIndex - bIndex;
+    return a.displayName.localeCompare(b.displayName);
+  });
 }
 
 /** ============ getAllTitlesAndDashedNamesSuperblockJSONArray() ============ */
@@ -113,6 +160,9 @@ export async function getSuperblockTitlesInClassroomByIndex(
   const normalizedDashedNames = expandedDashedNames
     .map(normalizeSuperblockDashedName)
     .filter((name, index, arr) => arr.indexOf(name) === index);
+  const orderedDashedNames = sortSuperblocksByDisplayOrder(
+    normalizedDashedNames
+  );
 
   console.log(
     '[getSuperblockTitlesInClassroomByIndex] Input:',
@@ -123,7 +173,7 @@ export async function getSuperblockTitlesInClassroomByIndex(
     expandedDashedNames
   );
 
-  return normalizedDashedNames.map(dashedName => {
+  return orderedDashedNames.map(dashedName => {
     const superblock = allSuperblockTitles.find(
       sb => sb.superblockDashedName === dashedName
     );
@@ -350,7 +400,9 @@ export async function createSuperblockDashboardObject(superblock) {
   );
 
   let sortedBlocks = superblock.map(currBlock => {
-    let certification = Object.keys(currBlock).map(certificationName => {
+    let certification = sortSuperblocksByDisplayOrder(
+      Object.keys(currBlock)
+    ).map(certificationName => {
       let superblockDashedNameAndTitle =
         superblockDashedNamesAndTitlesArray.find(
           superblockDashedNameAndTitleJSON =>

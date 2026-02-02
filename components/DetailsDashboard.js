@@ -3,7 +3,8 @@ import styles from './DetailsCSS.module.css';
 import DetailsDashboardList from './DetailsDashboardList';
 import {
   getStudentProgressInSuperblock,
-  extractFilteredCompletionTimestamps
+  extractFilteredCompletionTimestamps,
+  orderCertificationOptions
 } from '../util/api_proccesor';
 import StudentActivityChart from './StudentActivityChart';
 
@@ -17,13 +18,18 @@ export default function DetailsDashboard(props) {
     );
   };
 
-  const selectedSuperblocks = [
-    ...new Set(
-      props.superblocksDetailsJSONArray
-        .map(blockObj => blockObj?.superblock)
-        .filter(Boolean)
-    )
-  ];
+  const selectedSuperblocks = orderCertificationOptions(
+    [
+      ...new Set(
+        props.superblocksDetailsJSONArray
+          .map(blockObj => blockObj?.superblock)
+          .filter(Boolean)
+      )
+    ].map(dashedName => ({
+      value: dashedName,
+      displayName: dashedName
+    }))
+  ).map(option => option.value);
   const filteredCompletionTimestamps = extractFilteredCompletionTimestamps(
     props.studentData.certifications,
     selectedSuperblocks
