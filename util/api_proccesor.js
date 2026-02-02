@@ -61,16 +61,19 @@ export async function getAllSuperblockTitlesAndDashedNames() {
   return superblockDashedNameToTitleArrayMapping;
 }
 
-/** ============ getSuperblockTitlesInClassroomByIndex(fccCertificationsArrayOfIndicies) ============ */
-// The reason we use an array of indicies is because that is how the data is stored in the Classroom table after class creation, see ClassInviteTable.js and modal.js component for more context.
+/** ============ getSuperblockTitlesInClassroomByIndex(fccCertificationsDashedNames) ============ */
+// Now accepts dashed names stored in fccCertifications and looks up titles by property.
 export async function getSuperblockTitlesInClassroomByIndex(
-  fccCertificationsArrayOfIndicies
+  fccCertificationsDashedNames
 ) {
   let allSuperblockTitles = await getAllSuperblockTitlesAndDashedNames();
 
-  return fccCertificationsArrayOfIndicies.map(
-    x => allSuperblockTitles[x].superblockReadableTitle
-  );
+  return fccCertificationsDashedNames.map(dashedName => {
+    const superblock = allSuperblockTitles.find(
+      sb => sb.superblockDashedName === dashedName
+    );
+    return superblock ? superblock.superblockReadableTitle : dashedName;
+  });
 }
 
 /** ============ checkIfStudentHasProgressDataForSuperblock(studentJSON, superblockDashboardObj) ============ */
@@ -85,8 +88,14 @@ export function checkIfStudentHasProgressDataForSuperblocksSelectedByTeacher(
 
   let superblockTitlesSelectedByTeacher = [];
 
-  superblockDashboardObj.forEach(superblockObj => {
-    superblockTitlesSelectedByTeacher.push(superblockObj[0].superblock);
+  superblockDashboardObj.forEach(blockEntry => {
+    const blockObj = Array.isArray(blockEntry) ? blockEntry[0] : blockEntry;
+    if (
+      blockObj?.superblock &&
+      !superblockTitlesSelectedByTeacher.includes(blockObj.superblock)
+    ) {
+      superblockTitlesSelectedByTeacher.push(blockObj.superblock);
+    }
   });
 
   let studentResponseDataHasSuperblockBooleanArray = [];
@@ -274,9 +283,24 @@ export async function createSuperblockDashboardObject(superblock) {
             certificationName
         );
 
-      let blockInfo = Object.entries(
-        currBlock[certificationName]['blocks']
-      ).map(([course]) => {
+      const curriculum = currBlock[certificationName] || {};
+      const legacyBlocks = curriculum.blocks;
+      const v9Blocks = (curriculum.chapters || []).flatMap(chapter =>
+        (chapter.modules || []).flatMap(module => module.blocks || [])
+      );
+      const blocksSource = Array.isArray(legacyBlocks)
+        ? legacyBlocks
+        : v9Blocks.length
+        ? v9Blocks
+        : legacyBlocks || {};
+      const isBlocksArray = Array.isArray(blocksSource);
+      const normalizedBlocks = isBlocksArray
+        ? blocksSource
+        : blocksSource || {};
+
+      let blockInfo = (
+        isBlocksArray ? normalizedBlocks : Object.entries(normalizedBlocks)
+      ).map((blockEntry, index) => {
         /*
 The following object is necessary in order to sort our courses/superblocks correctly in order to pass them into our dashtabs.js component
 
@@ -290,28 +314,35 @@ selector: this is for our dashtabs component to have a unique selector for each 
 allChallenges: As the name implies, this holds all of our challenges (inside of the current block) in correct order
 The last bit is the order of the current block inside of the certification, not the challenges that exist inside of this block
 */
+        const course = isBlocksArray
+          ? blockEntry?.meta?.dashedName || blockEntry?.dashedName
+          : blockEntry[0];
+        const blockData = isBlocksArray ? blockEntry : blockEntry[1];
+        const blockMeta = blockData?.meta || {};
+        const challenges = blockData?.challenges || blockData;
+
         let currCourseBlock = {
-          superblock: superblockDashedNameAndTitle.superblockDashedName,
+          superblock:
+            superblockDashedNameAndTitle?.superblockDashedName ||
+            certificationName,
           superblockReadableTitle:
-            superblockDashedNameAndTitle.superblockReadableTitle,
-          blockName:
-            currBlock[certificationName]['blocks'][course]['challenges'][
-              'name'
-            ],
+            superblockDashedNameAndTitle?.superblockReadableTitle ||
+            certificationName,
+          blockName: isBlocksArray ? blockMeta?.name : challenges?.name,
           /*
 This selector is changed inside of components/dashtabs.js
 If you are having issues with the selector, you should probably check there.
 */
           selector: course,
           dashedName: course,
-          allChallenges:
-            currBlock[certificationName]['blocks'][course]['challenges'][
-              'challengeOrder'
-            ],
-          order:
-            currBlock[certificationName]['blocks'][course]['challenges'][
-              'order'
-            ]
+          allChallenges: isBlocksArray
+            ? (blockMeta?.challengeOrder || [])
+                .map(challenge =>
+                  typeof challenge === 'string' ? challenge : challenge?.id
+                )
+                .filter(Boolean)
+            : challenges?.challengeOrder,
+          order: isBlocksArray ? blockMeta?.order ?? index : challenges?.order
         };
         return currCourseBlock;
       });
@@ -321,7 +352,7 @@ If you are having issues with the selector, you should probably check there.
     return certification;
   });
   // Since we return new arrays at every map, we have to flatten our 3D array down to 2D.
-  return sortedBlocks.flat(1);
+  return sortedBlocks.flat(2);
 }
 
 /** ============ fetchStudentData() ============ */
@@ -347,10 +378,14 @@ export async function getIndividualStudentData(studentEmail) {
 /** ============ getTotalChallengesForSuperblocks(superblockDasboardObj) ============ */
 export function getTotalChallengesForSuperblocks(superblockDasboardObj) {
   let totalChallengesInSuperblock = 0;
-  superblockDasboardObj.forEach(blockObjArray => {
-    blockObjArray.forEach(blockObj => {
-      totalChallengesInSuperblock += blockObj.allChallenges.length;
-    });
+  superblockDasboardObj.forEach(blockEntry => {
+    if (Array.isArray(blockEntry)) {
+      blockEntry.forEach(blockObj => {
+        totalChallengesInSuperblock += blockObj?.allChallenges?.length || 0;
+      });
+      return;
+    }
+    totalChallengesInSuperblock += blockEntry?.allChallenges?.length || 0;
   });
 
   return totalChallengesInSuperblock;
