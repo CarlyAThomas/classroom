@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { MultiSelect } from 'react-multi-select-component';
 import DisplayNotification from './displayNotification';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -25,9 +24,7 @@ export default function Modal({
   async function saveClass(e) {
     setModalOn(false);
     e.preventDefault();
-    const fccCertifications = [];
-    selected.map(x => fccCertifications.push(x.value));
-    fccCertifications.sort();
+    const fccCertifications = [...selected].sort();
     formData.fccCertifications = fccCertifications;
 
     const response = await fetch(`/api/create_class_teacher`, {
@@ -39,7 +36,7 @@ export default function Modal({
     });
 
     if (response.ok) {
-      let jsonRes = await response.json()
+      let jsonRes = await response.json();
       let newClassroom = {
         classroomName: jsonRes.classroomName,
         description: jsonRes.description,
@@ -130,19 +127,36 @@ export default function Modal({
                         ></textarea>
                       </div>
                     </div>
-                    <div className='rounded-md shadow-sm -space-y-px w-60 lg:w-72 2xl:w-96'>
+                    <div className='rounded-md shadow-sm -space-y-px w-72 lg:w-[28rem] 2xl:w-[36rem]'>
                       <div>
                         <h1 className='text-white'>Select Certifications:</h1>
-                        <MultiSelect
-                          hidePlaceholder={false}
-                          options={certificationNames.map(x => ({
-                            value: x['value'],
-                            label: x['displayName']
-                          }))}
-                          value={selected}
-                          onChange={setSelected}
-                          labelledBy='Select'
-                        />
+                        <div className='mt-2 max-h-72 overflow-y-auto rounded border border-gray-300 bg-white p-3 text-sm text-gray-900'>
+                          <div className='grid grid-cols-1 gap-2 md:grid-cols-2'>
+                            {certificationNames.map(option => {
+                              const isChecked = selected.includes(option.value);
+                              return (
+                                <label
+                                  key={option.value}
+                                  className='flex items-start gap-2 cursor-pointer'
+                                >
+                                  <input
+                                    type='checkbox'
+                                    className='mt-1'
+                                    checked={isChecked}
+                                    onChange={() => {
+                                      setSelected(prev =>
+                                        prev.includes(option.value)
+                                          ? prev.filter(v => v !== option.value)
+                                          : [...prev, option.value]
+                                      );
+                                    }}
+                                  />
+                                  <span>{option.displayName}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
                     </div>
 

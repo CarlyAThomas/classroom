@@ -41,7 +41,6 @@ const SUPERBLOCK_DISPLAY_ORDER = [
   'rosetta-code',
   'foundational-c-sharp-with-microsoft'
 ];
-
 function expandTieredSuperblocks(dashedNames = []) {
   const expanded = new Set();
 
@@ -88,7 +87,6 @@ export function orderCertificationOptions(options = []) {
     return a.displayName.localeCompare(b.displayName);
   });
 }
-
 /** ============ getAllTitlesAndDashedNamesSuperblockJSONArray() ============ */
 export async function getAllTitlesAndDashedNamesSuperblockJSONArray() {
   // calls this API https://www.freecodecamp.org/curriculum-data/v2/available-superblocks.json
@@ -253,7 +251,6 @@ export async function getDashedNamesURLs(fccCertifications) {
   }
 
   const expandedDashedNames = expandTieredSuperblocks(fccCertifications);
-
   const urls = expandedDashedNames.map(
     dashedName => `${FCC_BASE_URL}/${dashedName}.json`
   );
@@ -319,12 +316,19 @@ export async function getNonDashedNamesURLs(fccCertificationsDashedNames) {
  *
  * */
 export async function getSuperBlockJsons(superblockURLS) {
+  console.log('[getSuperBlockJsons] Fetching', superblockURLS.length, 'URLs');
   let responses = await Promise.all(
     superblockURLS.map(async currUrl => {
       let currResponse = await fetch(currUrl);
       let superblockJSON = currResponse.json();
       return superblockJSON;
     })
+  );
+  console.log(
+    '[getSuperBlockJsons] Got',
+    responses.length,
+    'JSONs. Keys:',
+    responses.map(r => Object.keys(r)[0])
   );
   return responses;
 }
@@ -372,6 +376,11 @@ export async function getSuperBlockJsons(superblockURLS) {
 export async function createSuperblockDashboardObject(superblock) {
   let superblockDashedNamesAndTitlesArray =
     await getAllSuperblockTitlesAndDashedNames();
+
+  console.log(
+    '[createSuperblockDashboardObject] Input superblocks:',
+    superblock.length
+  );
 
   let sortedBlocks = superblock.map(currBlock => {
     let certification = sortSuperblocksByDisplayOrder(
@@ -514,6 +523,11 @@ export async function getIndividualStudentData(studentEmail) {
 
 /** ============ getTotalChallengesForSuperblocks(superblockDasboardObj) ============ */
 export function getTotalChallengesForSuperblocks(superblockDasboardObj) {
+  console.log(
+    '[getTotalChallengesForSuperblocks] Input:',
+    superblockDasboardObj.length,
+    'entries'
+  );
   let totalChallengesInSuperblock = 0;
   superblockDasboardObj.forEach(blockEntry => {
     if (Array.isArray(blockEntry)) {
@@ -525,6 +539,10 @@ export function getTotalChallengesForSuperblocks(superblockDasboardObj) {
     totalChallengesInSuperblock += blockEntry?.allChallenges?.length || 0;
   });
 
+  console.log(
+    '[getTotalChallengesForSuperblocks] Total:',
+    totalChallengesInSuperblock
+  );
   return totalChallengesInSuperblock;
 }
 
