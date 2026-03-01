@@ -1,10 +1,7 @@
-export const FCC_BASE_URL = 'https://www.freecodecamp.org/curriculum-data/v1/';
-export const AVAILABLE_SUPER_BLOCKS =
-  FCC_BASE_URL + 'available-superblocks.json';
+import { getAllTitlesAndDashedNamesSuperblockJSONArray } from '../curriculum/getAllTitlesAndDashedNamesSuperblockJSONArray';
 
 /**
- * The parameter relates to the index found at the following API response
- * https://www.freecodecamp.org/curriculum-data/v1/available-superblocks.json
+ * The parameter relates to selected superblock dashed names.
  *
  * Context: The way we know which superblocks are assigned in the classroom
  * is by storing the indicies in our DB (Prisma to access/write)
@@ -18,11 +15,28 @@ export const AVAILABLE_SUPER_BLOCKS =
  * fccCertifications column): "Select certifications:"
  */
 export async function getNonDashedNamesURLs(fccCertificationsIndex) {
-  const superblocksres = await fetch(AVAILABLE_SUPER_BLOCKS);
+  if (
+    !Array.isArray(fccCertificationsIndex) ||
+    fccCertificationsIndex.length === 0
+  ) {
+    return [];
+  }
 
-  const curriculumData = await superblocksres.json();
+  const superblocks = await getAllTitlesAndDashedNamesSuperblockJSONArray();
 
-  return fccCertificationsIndex.map(
-    x => curriculumData['superblocks'][x]['title']
-  );
+  return fccCertificationsIndex.map(certification => {
+    if (typeof certification === 'number') {
+      return superblocks[certification]?.title || String(certification);
+    }
+
+    const maybeIndex = Number(certification);
+    if (!Number.isNaN(maybeIndex) && String(maybeIndex) === certification) {
+      return superblocks[maybeIndex]?.title || certification;
+    }
+
+    const match = superblocks.find(
+      superblock => superblock.dashedName === certification
+    );
+    return match?.title || certification;
+  });
 }

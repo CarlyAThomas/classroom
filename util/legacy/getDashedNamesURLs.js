@@ -1,33 +1,39 @@
-export const FCC_BASE_URL = 'https://www.freecodecamp.org/curriculum-data/v1/';
-export const AVAILABLE_SUPER_BLOCKS =
-  FCC_BASE_URL + 'available-superblocks.json';
+import { getAllTitlesAndDashedNamesSuperblockJSONArray } from '../curriculum/getAllTitlesAndDashedNamesSuperblockJSONArray';
 
 /**
- * [Parameters] an array of indices as a parameter.
- * Those indices correspond to an index in an array of objects containing superblock data at a JSON endpoint (https://www.freecodecamp.org/curriculum-data/v1/available-superblocks.json)
- * The array of indices is stored in Prisma as fccCertificates (see const certificationNumbers in [id].js).
+ * [Parameters] an array of superblock dashed names.
+ * Backward-compatible: numeric indices and numeric strings are resolved to dashed names.
  *
- * [Returns] an array of URL endpoints where JSON for superblocks is accessed.
+ * [Returns] an array of superblock dashed names.
  *
  * Example usage:
- * getDashedNamesURLs([0, 2, 3])
+ * getDashedNamesURLs(['responsive-web-design-v9', 'javascript-v9'])
  *
  *
  * Example output:
- * [
- * 'https://www.freecodecamp.org/curriculum-data/v1/2022/responsive-web-design.json',
- * 'https://www.freecodecamp.org/curriculum-data/v1/responsive-web-design.json',
- * 'https://www.freecodecamp.org/curriculum-data/v1/back-end-development-and-apis.json'
- * ]
+ * ['responsive-web-design-v9', 'javascript-v9']
  *
  * NOTE: This function is deprecated for v9 curriculum which doesn't have individual REST API JSON files.
  * */
 export async function getDashedNamesURLs(fccCertifications) {
-  const superblocksres = await fetch(AVAILABLE_SUPER_BLOCKS);
+  if (!Array.isArray(fccCertifications) || fccCertifications.length === 0) {
+    return [];
+  }
 
-  const curriculumData = await superblocksres.json();
+  const superblocks = await getAllTitlesAndDashedNamesSuperblockJSONArray();
 
-  return fccCertifications.map(
-    x => FCC_BASE_URL + curriculumData['superblocks'][x]['dashedName'] + '.json'
-  );
+  return fccCertifications
+    .map(certification => {
+      if (typeof certification === 'number') {
+        return superblocks[certification]?.dashedName;
+      }
+
+      const maybeIndex = Number(certification);
+      if (!Number.isNaN(maybeIndex) && String(maybeIndex) === certification) {
+        return superblocks[maybeIndex]?.dashedName;
+      }
+
+      return certification;
+    })
+    .filter(Boolean);
 }
