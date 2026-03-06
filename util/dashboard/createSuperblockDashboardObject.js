@@ -50,15 +50,15 @@ export async function createSuperblockDashboardObject(superblock) {
         currBlock[certificationName]['blocks']
       ).map(([course]) => {
         /*
-The following object is necessary in order to sort our courses/superblocks correctly in order to pass them into our dashtabs.js component
+The following object is necessary in order to sort our courses/superblocks correctly.
 
 Layout:
 blockInfo: This is an array of objects that will be passed into our sorting function.
 
-name: This is the human readable name of the course
-selector: this is for our dashtabs component to have a unique selector for each dynamically generated tab
-allChallenges: As the name implies, this holds all of our challenges (inside of the current block) in correct order
-The last bit is the order of the current block inside of the certification, not the challenges that exist inside of this block
+blockName: Human-readable name of the course/block
+selector: unique key for each block (its dashedName)
+allChallenges: all challenge IDs in this block in curriculum order
+order: the position of this block within its superblock
 */
         let currCourseBlock = {
           superblock: superblockDashedNameAndTitle.superblockDashedName,
@@ -69,8 +69,7 @@ The last bit is the order of the current block inside of the certification, not 
               'name'
             ],
           /*
-This selector is changed inside of components/dashtabs.js
-If you are having issues with the selector, you should probably check there.
+The selector is the block dashedName and is used as a unique key for each block.
 */
           selector: course,
           dashedName: course,

@@ -11,9 +11,8 @@ import redirectUser from '../../../../../util/redirectUser.js';
 import styles from '../../../../../components/DetailsCSS.module.css';
 import DetailsDashboard from '../../../../../components/DetailsDashboard';
 
-// NOTE: These functions are deprecated for v9 curriculum (no individual REST API JSON files)
-import { getDashedNamesURLs } from '../../../../../util/legacy/getDashedNamesURLs';
-import { getSuperBlockJsons } from '../../../../../util/legacy/getSuperBlockJsons';
+import { getDashedNamesURLs } from '../../../../../util/curriculum/getDashedNamesURLs';
+import { getSuperBlockJsons } from '../../../../../util/curriculum/getSuperBlockJsons';
 
 export async function getServerSideProps(context) {
   // Dynamic import to prevent Prisma from being bundled for client

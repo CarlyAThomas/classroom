@@ -6,11 +6,12 @@ const {
 const {
   getAllTitlesAndDashedNamesSuperblockJSONArray
 } = require('../../util/curriculum/getAllTitlesAndDashedNamesSuperblockJSONArray');
-const { getDashedNamesURLs } = require('../../util/legacy/getDashedNamesURLs');
 const {
-  getNonDashedNamesURLs
-} = require('../../util/legacy/getNonDashedNamesURLs');
-const { getSuperBlockJsons } = require('../../util/legacy/getSuperBlockJsons');
+  getDashedNamesURLs
+} = require('../../util/curriculum/getDashedNamesURLs');
+const {
+  getSuperBlockJsons
+} = require('../../util/curriculum/getSuperBlockJsons');
 
 describe('GraphQL curriculum adapters', () => {
   const mockGraphQLResponse = {
@@ -104,15 +105,6 @@ describe('GraphQL curriculum adapters', () => {
       'responsive-web-design-v9',
       'javascript-v9',
       'responsive-web-design-v9'
-    ]);
-  });
-
-  it('returns readable names from mixed certification inputs', async () => {
-    const result = await getNonDashedNamesURLs(['responsive-web-design-v9', 1]);
-
-    expect(result).toEqual([
-      'Responsive Web Design',
-      'JavaScript Algorithms and Data Structures'
     ]);
   });
 

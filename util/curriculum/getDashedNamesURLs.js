@@ -1,4 +1,4 @@
-import { getAllTitlesAndDashedNamesSuperblockJSONArray } from '../curriculum/getAllTitlesAndDashedNamesSuperblockJSONArray';
+import { getAllTitlesAndDashedNamesSuperblockJSONArray } from './getAllTitlesAndDashedNamesSuperblockJSONArray';
 
 /**
  * Resolves an array of stored Prisma fccCertifications values to superblock dashed names.

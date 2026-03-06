@@ -1,4 +1,4 @@
-import { fetchAllSuperblocksWithBlocksFromGraphQL } from '../curriculum/fetchSuperblocksFromGraphQL';
+import { fetchAllSuperblocksWithBlocksFromGraphQL } from './fetchSuperblocksFromGraphQL';
 
 /**
  * Fetches block/challenge data for the given superblock dashed names from GraphQL
