@@ -4,7 +4,6 @@ import { useRouter } from 'next/router';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MultiSelect } from 'react-multi-select-component';
-import { getStoredSuperblocks } from '../util/curriculum/constants';
 
 export default function ClassInviteTable({
   currentClass,
@@ -70,13 +69,12 @@ export default function ClassInviteTable({
   async function saveEdit(e) {
     setEditOn(false);
     e.preventDefault();
-    const fccCertificationsSet = new Set();
-    selected.forEach(x =>
-      getStoredSuperblocks(x.value).forEach(req =>
-        fccCertificationsSet.add(req)
-      )
-    );
-    formData.fccCertifications = [...fccCertificationsSet].sort();
+    const fccCertifications = [];
+    selected.map(x => fccCertifications.push(x.value));
+    fccCertifications.sort(function (a, b) {
+      return a - b;
+    });
+    formData.fccCertifications = fccCertifications;
     formData.classroomId = currentClass.classroomId;
     const JSONdata = JSON.stringify(formData);
     try {

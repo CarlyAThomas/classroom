@@ -1,9 +1,7 @@
 import {
   CURRICULUM_GRAPHQL_ENDPOINT,
   LEGACY_SUPERBLOCK_DASHED_NAMES,
-  INTERVIEW_PREP_SUPERBLOCK_DASHED_NAMES,
-  isTieredSuperblock,
-  getRequiredSuperblocks
+  INTERVIEW_PREP_SUPERBLOCK_DASHED_NAMES
 } from './constants';
 
 const SUPERBLOCKS_QUERY = `
@@ -35,7 +33,6 @@ const SUPERBLOCKS_WITH_BLOCKS_QUERY = `
 
 let superblocksCache = null;
 let superblocksWithBlocksCache = null;
-let allSuperblocksWithBlocksCache = null;
 
 function removeLegacySuperblocks(superblocks) {
   return superblocks
@@ -52,9 +49,7 @@ function removeLegacySuperblocks(superblocks) {
     })
     .map(superblock => ({
       ...superblock,
-      title: superblock.title || superblock.name || superblock.dashedName,
-      isTiered: isTieredSuperblock(superblock.dashedName),
-      requiredSuperblocks: getRequiredSuperblocks(superblock.dashedName)
+      title: superblock.title || superblock.name || superblock.dashedName
     }));
 }
 
@@ -117,47 +112,7 @@ export async function fetchSuperblocksWithBlocksFromGraphQL() {
   return superblocksWithBlocksCache;
 }
 
-/**
- * Fetches all superblocks with blocks from GraphQL without filtering legacy superblocks.
- * Used by the dashboard to fetch required superblocks for tiered certifications.
- */
-export async function fetchAllSuperblocksWithBlocksFromGraphQL() {
-  if (allSuperblocksWithBlocksCache) {
-    return allSuperblocksWithBlocksCache;
-  }
-
-  const response = await fetch(CURRICULUM_GRAPHQL_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json'
-    },
-    body: JSON.stringify({ query: SUPERBLOCKS_WITH_BLOCKS_QUERY })
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `GraphQL request failed: ${response.status} ${response.statusText}`
-    );
-  }
-
-  let result;
-  try {
-    result = await response.json();
-  } catch {
-    throw new Error('Invalid JSON returned from curriculum GraphQL endpoint');
-  }
-
-  if (result.errors) {
-    throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
-  }
-
-  allSuperblocksWithBlocksCache = result?.data?.superblocks || [];
-  return allSuperblocksWithBlocksCache;
-}
-
 export function clearSuperblocksCache() {
   superblocksCache = null;
   superblocksWithBlocksCache = null;
-  allSuperblocksWithBlocksCache = null;
 }

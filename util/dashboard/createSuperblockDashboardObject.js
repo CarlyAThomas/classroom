@@ -34,10 +34,7 @@ export async function createSuperblockDashboardObject(superblock) {
           superblockDashedNameAndTitleJSON =>
             superblockDashedNameAndTitleJSON['superblockDashedName'] ===
             certificationName
-        ) ?? {
-          superblockDashedName: certificationName,
-          superblockReadableTitle: certificationName
-        };
+        );
 
       let blockInfo = Object.entries(
         currBlock[certificationName]['blocks']

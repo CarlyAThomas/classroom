@@ -1,5 +1,4 @@
-import { fetchAllSuperblocksWithBlocksFromGraphQL } from '../curriculum/fetchSuperblocksFromGraphQL';
-import { getRequiredSuperblocks } from '../curriculum/constants';
+import { fetchSuperblocksWithBlocksFromGraphQL } from '../curriculum/fetchSuperblocksFromGraphQL';
 
 /**
  * [Parameters] an array of superblock dashed names.
@@ -33,49 +32,32 @@ export async function getSuperBlockJsons(superblockURLS) {
     return [];
   }
 
-  const allSuperblocks = await fetchAllSuperblocksWithBlocksFromGraphQL();
-  const superblocksByDashedName = new Map(
-    allSuperblocks.map(s => [s.dashedName, s])
-  );
+  const selectedDashedNames = new Set(superblockURLS);
+  const allSuperblocks = await fetchSuperblocksWithBlocksFromGraphQL();
 
-  const toBlocks = superblock =>
-    (superblock.blockObjects || []).reduce((accumulator, block, index) => {
-      accumulator[block.dashedName] = {
-        challenges: {
-          name: block.name,
-          order: typeof block.order === 'number' ? block.order : index,
-          challengeOrder: (block.challengeOrder || [])
-            .map(challenge => challenge.id)
-            .filter(Boolean)
+  return allSuperblocks
+    .filter(superblock => selectedDashedNames.has(superblock.dashedName))
+    .map(superblock => {
+      const blocks = (superblock.blockObjects || []).reduce(
+        (accumulator, block, index) => {
+          accumulator[block.dashedName] = {
+            challenges: {
+              name: block.name,
+              order: typeof block.order === 'number' ? block.order : index,
+              challengeOrder: (block.challengeOrder || [])
+                .map(challenge => challenge.id)
+                .filter(Boolean)
+            }
+          };
+          return accumulator;
+        },
+        {}
+      );
+
+      return {
+        [superblock.dashedName]: {
+          blocks
         }
       };
-      return accumulator;
-    }, {});
-
-  // Filter out any dashedName that is already a sub-requirement of another
-  // selected tiered cert (e.g. if both 'back-end-development-and-apis' and
-  // 'back-end-development-and-apis-v9' are stored, only process the v9 one)
-  const absorbedNames = new Set(
-    superblockURLS.flatMap(name => {
-      const required = getRequiredSuperblocks(name);
-      // Exclude the top-level name itself — only collect its sub-requirements
-      return required.filter(r => r !== name);
-    })
-  );
-  const topLevelNames = superblockURLS.filter(name => !absorbedNames.has(name));
-
-  return topLevelNames.map(dashedName => {
-    const required = getRequiredSuperblocks(dashedName);
-
-    // Merge blocks from all required superblocks into a single entry under the selected name
-    const mergedBlocks = required.reduce((acc, reqName) => {
-      const superblock = superblocksByDashedName.get(reqName);
-      if (superblock) {
-        Object.assign(acc, toBlocks(superblock));
-      }
-      return acc;
-    }, {});
-
-    return { [dashedName]: { blocks: mergedBlocks } };
-  });
+    });
 }
