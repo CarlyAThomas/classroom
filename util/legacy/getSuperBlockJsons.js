@@ -1,4 +1,4 @@
-import { fetchSuperblocksWithBlocksFromGraphQL } from '../curriculum/fetchSuperblocksFromGraphQL';
+import { fetchAllSuperblocksWithBlocksFromGraphQL } from '../curriculum/fetchSuperblocksFromGraphQL';
 
 /**
  * [Parameters] an array of superblock dashed names.
@@ -32,8 +32,10 @@ export async function getSuperBlockJsons(superblockURLS) {
     return [];
   }
 
+  // Use the unfiltered fetch so legacy dashedNames stored in Prisma
+  // (e.g. back-end-development-and-apis) can be resolved.
+  const allSuperblocks = await fetchAllSuperblocksWithBlocksFromGraphQL();
   const selectedDashedNames = new Set(superblockURLS);
-  const allSuperblocks = await fetchSuperblocksWithBlocksFromGraphQL();
 
   return allSuperblocks
     .filter(superblock => selectedDashedNames.has(superblock.dashedName))
@@ -54,10 +56,6 @@ export async function getSuperBlockJsons(superblockURLS) {
         {}
       );
 
-      return {
-        [superblock.dashedName]: {
-          blocks
-        }
-      };
+      return { [superblock.dashedName]: { blocks } };
     });
 }

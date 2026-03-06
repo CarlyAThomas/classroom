@@ -33,6 +33,7 @@ const SUPERBLOCKS_WITH_BLOCKS_QUERY = `
 
 let superblocksCache = null;
 let superblocksWithBlocksCache = null;
+let allSuperblocksWithBlocksCache = null;
 
 function removeLegacySuperblocks(superblocks) {
   return superblocks
@@ -112,7 +113,48 @@ export async function fetchSuperblocksWithBlocksFromGraphQL() {
   return superblocksWithBlocksCache;
 }
 
+/**
+ * Fetches all superblocks with blocks from GraphQL without filtering legacy superblocks.
+ * Used by the dashboard to fetch blocks for legacy superblocks that are merged
+ * into v9 superblocks (e.g. back-end-development-and-apis into back-end-development-and-apis-v9).
+ */
+export async function fetchAllSuperblocksWithBlocksFromGraphQL() {
+  if (allSuperblocksWithBlocksCache) {
+    return allSuperblocksWithBlocksCache;
+  }
+
+  const response = await fetch(CURRICULUM_GRAPHQL_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({ query: SUPERBLOCKS_WITH_BLOCKS_QUERY })
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `GraphQL request failed: ${response.status} ${response.statusText}`
+    );
+  }
+
+  let result;
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error('Invalid JSON returned from curriculum GraphQL endpoint');
+  }
+
+  if (result.errors) {
+    throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+  }
+
+  allSuperblocksWithBlocksCache = result?.data?.superblocks || [];
+  return allSuperblocksWithBlocksCache;
+}
+
 export function clearSuperblocksCache() {
   superblocksCache = null;
   superblocksWithBlocksCache = null;
+  allSuperblocksWithBlocksCache = null;
 }

@@ -40,3 +40,32 @@ export const INTERVIEW_PREP_SUPERBLOCK_DASHED_NAMES = new Set([
   'project-euler',
   'rosetta-code'
 ]);
+
+// Used at save time (Prisma) to expand a teacher's cert selection into all
+// required superblock dashedNames. Mirrors FCC Proper's certificationRequirements.
+// When the GraphQL database adds a requirements field, this can be removed.
+export const CERT_REQUIREMENTS = {
+  'back-end-development-and-apis-v9': [
+    'back-end-development-and-apis',
+    'back-end-development-and-apis-v9'
+  ],
+  'full-stack-developer-v9': [
+    'responsive-web-design-v9',
+    'javascript-v9',
+    'front-end-development-libraries-v9',
+    'python-v9',
+    'relational-databases-v9',
+    'back-end-development-and-apis',
+    'back-end-development-and-apis-v9',
+    'full-stack-developer-v9'
+  ]
+};
+
+/**
+ * Returns the dashedNames to store in Prisma for a given teacher-selected superblock.
+ * For certs with requirements, returns all required dashedNames.
+ * For all others, returns just the superblock itself.
+ */
+export function getStoredSuperblocks(dashedName) {
+  return CERT_REQUIREMENTS[dashedName] ?? [dashedName];
+}
