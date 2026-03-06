@@ -1,32 +1,39 @@
 import { fetchAllSuperblocksWithBlocksFromGraphQL } from '../curriculum/fetchSuperblocksFromGraphQL';
 
 /**
- * [Parameters] an array of superblock dashed names.
+ * Fetches block/challenge data for the given superblock dashed names from GraphQL
+ * and returns it in the structure expected by createSuperblockDashboardObject.
  *
- * [Returns] an array of objects containing superblock/certificate information.
- * The objects have 1 key: the superblock/certificate URL (dashed/or undashed URL name) and the value of the objects
- * is the corresponding information associated with the superblock/certificate. The values contain two arrays 'intro' and 'blocks'.
+ * Uses the unfiltered GraphQL fetch so legacy dashedNames stored in Prisma
+ * (e.g. 'back-end-development-and-apis' — the v8 prerequisite of v9) are resolved
+ * correctly alongside current v9 superblocks.
+ *
+ * @param {string[]} superblockURLS - Array of superblock dashed names
+ *   (the parameter is named 'superblockURLS' for backward compatibility;
+ *    it now accepts dashed names directly, not URL strings)
+ * @returns {Promise<Array>} Array of objects, one per superblock, each keyed by
+ *   its dashedName with a 'blocks' object inside.
  *
  * Example usage:
- * getSuperBlockJsons([
- * 'https://www.freecodecamp.org/curriculum-data/v1/2022/responsive-web-design.json',
- * 'https://www.freecodecamp.org/curriculum-data/v1/javascript-algorithms-and-data-structures.json'
- * ])
- *
+ * getSuperBlockJsons(['back-end-development-and-apis', 'back-end-development-and-apis-v9'])
  *
  * Example output:
  * [
- * {
- * '2022/responsive-web-design': { intro: [Array], blocks: [Object] }
- * },
- * {
- * 'javascript-algorithms-and-data-structures': { intro: [Array], blocks: [Object] }
- * }
+ *   {
+ *     'back-end-development-and-apis': {
+ *       blocks: {
+ *         'managing-packages-with-npm': {
+ *           challenges: { name: 'Managing Packages with NPM', order: 0, challengeOrder: ['id1', ...] }
+ *         },
+ *         ...
+ *       }
+ *     }
+ *   },
+ *   {
+ *     'back-end-development-and-apis-v9': { blocks: { ... } }
+ *   }
  * ]
- *
- * This function now adapts GraphQL superblock data to the legacy structure expected
- * by createSuperblockDashboardObject.
- * */
+ */
 export async function getSuperBlockJsons(superblockURLS) {
   if (!Array.isArray(superblockURLS) || superblockURLS.length === 0) {
     return [];
