@@ -1,8 +1,7 @@
-# Teacher Onboarding MVP TODO
+# Student Onboarding MVP TODO
 
 ## Goals
 
-- [ ] Admin invite-only teacher onboarding
 - [ ] Student invite by join link/code
 - [ ] Student invite by email
 - [ ] Teacher resend/reinvite support
@@ -44,7 +43,7 @@
 ## Email
 
 - [ ] Select/send provider integration strategy
-- [ ] Teacher and student invite templates
+- [ ] Student invite templates
 - [ ] Resend/retry behavior
 - [ ] Expiry handling messaging
 
@@ -52,7 +51,6 @@
 
 - [ ] Unit tests for state transitions
 - [ ] API tests for auth + error paths
-- [ ] Integration test for admin->teacher flow
 - [ ] Integration test for teacher->student flow
 
 ## Join Link Review
@@ -82,6 +80,5 @@
 
 ## Rollout
 
-- [ ] Feature flag teacher invites
 - [ ] Feature flag student email invites
-- [ ] Update setup docs to remove manual role assignment
+- [ ] Update setup docs for student onboarding
